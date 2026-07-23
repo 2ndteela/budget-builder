@@ -1,0 +1,13 @@
+# Database files
+*.db
+
+# OS files
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Build artifacts
+bin/
+obj/
