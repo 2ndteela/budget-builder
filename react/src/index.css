@@ -1,0 +1,111 @@
+/* Universal color theme classes */
+:root {
+  --color-blue-primary: #1A4D8F;
+  --color-blue-secondary: #1A2A3D;
+  --color-blue-transparent: rgba(26, 77, 143, 0.2);
+  --color-blue-transparent-hover: rgba(26, 77, 143, 0.3);
+
+  --color-red-primary: #8F2C2C;
+  --color-red-secondary: #3D1A1A;
+  --color-red-transparent: rgba(143, 44, 44, 0.2);
+  --color-red-transparent-hover: rgba(143, 44, 44, 0.3);
+
+  --color-green-primary: #2C6E3D;
+  --color-green-secondary: #1A2D20;
+  --color-green-transparent: rgba(44, 110, 61, 0.2);
+  --color-green-transparent-hover: rgba(44, 110, 61, 0.3);
+
+  --color-yellow-primary: #8F7A2C;
+  --color-yellow-secondary: #3D351A;
+  --color-yellow-transparent: rgba(143, 122, 44, 0.2);
+  --color-yellow-transparent-hover: rgba(143, 122, 44, 0.3);
+
+  --color-purple-primary: #5A3D8F;
+  --color-purple-secondary: #2B1A3D;
+  --color-purple-transparent: rgba(90, 61, 143, 0.2);
+  --color-purple-transparent-hover: rgba(90, 61, 143, 0.3);
+
+  --color-pink-primary: #8F3D6E;
+  --color-pink-secondary: #3D1A2D;
+  --color-pink-transparent: rgba(143, 61, 110, 0.2);
+  --color-pink-transparent-hover: rgba(143, 61, 110, 0.3);
+
+  --color-orange-primary: #C85A28;
+  --color-orange-secondary: #3D251A;
+  --color-orange-transparent: rgba(200, 90, 40, 0.2);
+  --color-orange-transparent-hover: rgba(200, 90, 40, 0.3);
+
+  --color-teal-primary: #2C8F7A;
+  --color-teal-secondary: #1A3D35;
+  --color-teal-transparent: rgba(44, 143, 122, 0.2);
+  --color-teal-transparent-hover: rgba(44, 143, 122, 0.3);
+
+  --color-gray-primary: #2C2C2C;
+  --color-gray-secondary: #222;
+  --color-gray-transparent: rgba(44, 44, 44, 0.2);
+  --color-gray-transparent-hover: rgba(44, 44, 44, 0.3);
+}
+
+/* Universal background color utility classes */
+.color-blue {
+  --bg-primary: var(--color-blue-primary);
+  --bg-secondary: var(--color-blue-secondary);
+  --bg-transparent: var(--color-blue-transparent);
+  --bg-transparent-hover: var(--color-blue-transparent-hover);
+}
+
+.color-red {
+  --bg-primary: var(--color-red-primary);
+  --bg-secondary: var(--color-red-secondary);
+  --bg-transparent: var(--color-red-transparent);
+  --bg-transparent-hover: var(--color-red-transparent-hover);
+}
+
+.color-green {
+  --bg-primary: var(--color-green-primary);
+  --bg-secondary: var(--color-green-secondary);
+  --bg-transparent: var(--color-green-transparent);
+  --bg-transparent-hover: var(--color-green-transparent-hover);
+}
+
+.color-yellow {
+  --bg-primary: var(--color-yellow-primary);
+  --bg-secondary: var(--color-yellow-secondary);
+  --bg-transparent: var(--color-yellow-transparent);
+  --bg-transparent-hover: var(--color-yellow-transparent-hover);
+}
+
+.color-purple {
+  --bg-primary: var(--color-purple-primary);
+  --bg-secondary: var(--color-purple-secondary);
+  --bg-transparent: var(--color-purple-transparent);
+  --bg-transparent-hover: var(--color-purple-transparent-hover);
+}
+
+.color-pink {
+  --bg-primary: var(--color-pink-primary);
+  --bg-secondary: var(--color-pink-secondary);
+  --bg-transparent: var(--color-pink-transparent);
+  --bg-transparent-hover: var(--color-pink-transparent-hover);
+}
+
+.color-orange {
+  --bg-primary: var(--color-orange-primary);
+  --bg-secondary: var(--color-orange-secondary);
+  --bg-transparent: var(--color-orange-transparent);
+  --bg-transparent-hover: var(--color-orange-transparent-hover);
+}
+
+.color-teal {
+  --bg-primary: var(--color-teal-primary);
+  --bg-secondary: var(--color-teal-secondary);
+  --bg-transparent: var(--color-teal-transparent);
+  --bg-transparent-hover: var(--color-teal-transparent-hover);
+}
+
+.color-gray {
+  --bg-primary: var(--color-gray-primary);
+  --bg-secondary: var(--color-gray-secondary);
+  --bg-transparent: var(--color-gray-transparent);
+  --bg-transparent-hover: var(--color-gray-transparent-hover);
+}

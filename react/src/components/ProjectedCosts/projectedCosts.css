@@ -1,0 +1,480 @@
+.projected-costs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.data-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.cost-table {
+  flex: 1 1 calc(50% - 6px);
+  min-width: 400px;
+}
+
+.cost-table-header {
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-title-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cost-table-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.color-select {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #E0E0E0;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.color-select option {
+  background-color: #2C2C2C;
+  color: #E0E0E0;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.edit-button,
+.cancel-button {
+  background: none;
+  border: none;
+  color: #E0E0E0;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s;
+}
+
+.edit-button:hover,
+.cancel-button:hover {
+  opacity: 0.7;
+}
+
+.cost-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cost-table thead {
+  text-align: left;
+}
+
+.cost-table th,
+.cost-table td {
+  padding: 8px 12px;
+}
+
+.cost-table th:nth-child(1),
+.cost-table td:nth-child(1) {
+  width: 70%;
+}
+
+.cost-table th:nth-child(2),
+.cost-table td:nth-child(2) {
+  width: 30%;
+}
+
+.cost-table th:nth-child(3),
+.cost-table td:nth-child(3) {
+  width: 10%;
+}
+
+.cost-table.editing th:nth-child(1),
+.cost-table.editing td:nth-child(1) {
+  width: 60%;
+}
+
+.cost-table.editing th:nth-child(2),
+.cost-table.editing td:nth-child(2) {
+  width: 30%;
+}
+
+.cost-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.cost-table td:nth-child(2),
+.cost-table th:nth-child(2) {
+  text-align: right;
+}
+
+.cost-table input[type="text"],
+.cost-table input[type="number"] {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #E0E0E0;
+  padding: 8px;
+  width: 100%;
+  font-size: 14px;
+  border: none;
+}
+
+.cost-table input[type="number"] {
+  text-align: right;
+}
+
+.cost-table input::placeholder {
+  color: #888;
+  opacity: 0.7;
+}
+
+.delete-row-button {
+  background: none;
+  border: none;
+  color: #E0E0E0;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  transition: opacity 0.3s;
+}
+
+.delete-row-button:hover {
+  opacity: 0.7;
+}
+
+.total-row td {
+  padding-top: 16px;
+}
+
+/* Color variants for tables - uses universal color classes */
+.cost-table .cost-table-header {
+  background-color: var(--bg-primary);
+}
+
+.cost-table {
+  background-color: var(--bg-secondary);
+}
+
+.new-category-wrapper {
+  position: relative;
+}
+
+#new-category-button {
+  background-color: #FFFFFF10;
+  transition: .3s;
+  border: none;
+  color: #E0E0E0;
+  height: 30px;
+  width: 30px;
+  cursor: pointer;
+}
+
+#new-category-button:hover {
+  background-color: #FFFFFF30;
+}
+
+.new-category-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  background-color: #2C2C2C;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 250px;
+  z-index: 10;
+}
+
+.new-category-menu input,
+.new-category-menu select {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #E0E0E0;
+  padding: 8px;
+  font-size: 14px;
+}
+
+.new-category-menu select option {
+  background-color: #2C2C2C;
+  color: #E0E0E0;
+}
+
+.income-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #E0E0E0;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.income-checkbox-label input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.accounts-manager {
+  margin-top: 32px;
+  background-color: #222;
+}
+
+.accounts-manager h3 {
+  margin: 0 0 16px 0;
+  color: #E0E0E0;
+}
+
+.accounts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.account-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #2C2C2C;
+  transition: background-color 0.3s;
+}
+
+.account-item:hover {
+  background-color: #333;
+}
+
+.account-name {
+  color: #E0E0E0;
+  font-size: 14px;
+}
+
+.account-name-input {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #E0E0E0;
+  padding: 8px;
+  font-size: 14px;
+  flex: 1;
+  margin-right: 12px;
+}
+
+.account-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.account-action-btn {
+  background: none;
+  border: none;
+  color: #E0E0E0;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: opacity 0.3s;
+}
+
+.account-action-btn:hover {
+  opacity: 0.7;
+}
+
+.account-action-btn.delete {
+  color: var(--color-red-primary);
+}
+
+.new-account-section {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid #383838;
+}
+
+.create-account-btn {
+  background-color: var(--color-blue-primary);
+  border: none;
+  color: #E0E0E0;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.3s;
+  white-space: nowrap;
+}
+
+.create-account-btn:hover {
+  opacity: 0.8;
+}
+
+.new-category-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.new-category-buttons button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.3s;
+}
+
+.new-category-buttons button:first-child {
+  background-color: var(--color-blue-primary);
+  color: #E0E0E0;
+}
+
+.new-category-buttons button:first-child:hover {
+  opacity: 0.8;
+}
+
+.new-category-buttons button:last-child {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #E0E0E0;
+}
+
+.new-category-buttons button:last-child:hover {
+  opacity: 0.8;
+}
+
+.delete-category-button {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--color-red-primary);
+  border: none;
+  color: #E0E0E0;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+
+.delete-category-button:hover {
+  opacity: 0.8;
+}
+
+/* Month Frequency Picker */
+.month-frequency-picker {
+  position: relative;
+  display: inline-block;
+}
+
+.frequency-trigger-button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  color: #E0E0E0;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.frequency-trigger-button:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.frequency-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 1000;
+  background-color: #2a2a2a;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  min-width: 280px;
+}
+
+.frequency-month-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.frequency-month-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #E0E0E0;
+  padding: 8px 4px;
+  cursor: pointer;
+  font-size: 12px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.frequency-month-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.frequency-month-button.selected {
+  background-color: var(--color-blue-primary);
+  border-color: var(--color-blue-primary);
+  font-weight: 600;
+}
+
+.frequency-menu-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.frequency-cancel-button,
+.frequency-apply-button {
+  padding: 6px 12px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 4px;
+  transition: opacity 0.2s;
+}
+
+.frequency-cancel-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #E0E0E0;
+}
+
+.frequency-cancel-button:hover {
+  opacity: 0.8;
+}
+
+.frequency-apply-button {
+  background-color: var(--color-blue-primary);
+  color: #E0E0E0;
+}
+
+.frequency-apply-button:hover {
+  opacity: 0.8;
+}

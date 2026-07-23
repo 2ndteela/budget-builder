@@ -1,0 +1,131 @@
+.expansion-panel {
+  background-color: #222;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+.expansion-panel-header {
+  width: 100%;
+  background-color: #2C2C2C;
+  border: none;
+  color: #E0E0E0;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.expansion-panel-header:hover {
+  background-color: #383838;
+}
+
+.expansion-panel-title {
+  font-size: 16px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.expansion-panel-icon {
+  transition: transform 0.3s ease;
+  font-size: 12px;
+}
+
+.expansion-panel-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.expansion-panel-content {
+  overflow: hidden;
+  transition: height 0.3s ease;
+}
+
+.expansion-panel-body {
+  padding: 16px 24px;
+}
+
+/* Color variants */
+.expansion-panel-blue .expansion-panel-header {
+  background-color: #1A4D8F;
+}
+
+.expansion-panel-blue .expansion-panel-header:hover {
+  background-color: #2560A8;
+}
+
+.expansion-panel-blue {
+  background-color: #1A2A3D;
+}
+
+.expansion-panel-red .expansion-panel-header {
+  background-color: #8F2C2C;
+}
+
+.expansion-panel-red .expansion-panel-header:hover {
+  background-color: #A83838;
+}
+
+.expansion-panel-red {
+  background-color: #3D1A1A;
+}
+
+.expansion-panel-green .expansion-panel-header {
+  background-color: #2C6E3D;
+}
+
+.expansion-panel-green .expansion-panel-header:hover {
+  background-color: #388750;
+}
+
+.expansion-panel-green {
+  background-color: #1A2D20;
+}
+
+.expansion-panel-yellow .expansion-panel-header {
+  background-color: #8F7A2C;
+}
+
+.expansion-panel-yellow .expansion-panel-header:hover {
+  background-color: #A89338;
+}
+
+.expansion-panel-yellow {
+  background-color: #3D351A;
+}
+
+.expansion-panel-purple .expansion-panel-header {
+  background-color: #5A3D8F;
+}
+
+.expansion-panel-purple .expansion-panel-header:hover {
+  background-color: #6E50A8;
+}
+
+.expansion-panel-purple {
+  background-color: #2B1A3D;
+}
+
+.expansion-panel-pink .expansion-panel-header {
+  background-color: #8F3D6E;
+}
+
+.expansion-panel-pink .expansion-panel-header:hover {
+  background-color: #A85087;
+}
+
+.expansion-panel-pink {
+  background-color: #3D1A2D;
+}
+
+.expansion-panel-gray .expansion-panel-header {
+  background-color: #2C2C2C;
+}
+
+.expansion-panel-gray .expansion-panel-header:hover {
+  background-color: #383838;
+}
+
+.expansion-panel-gray {
+  background-color: #222;
+}
