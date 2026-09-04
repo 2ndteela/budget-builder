@@ -22,34 +22,38 @@ public class TransactionsController : ControllerBase
   {
     var query = _context.Transactions
       .Include(t => t.Account)
-      .Include(t => t.Category)
+      .Include(t => t.MonthlyBudget)
       .AsQueryable();
 
     if (!string.IsNullOrEmpty(startDate))
     {
       if (DateTime.TryParse(startDate + "-01", out var start))
       {
-        long startTimestamp;
-        long endTimestamp;
+        int endYear;
+        int endMonth;
 
         if (string.IsNullOrEmpty(endDate))
         {
-          var endOfMonth = new DateTime(start.Year, start.Month, DateTime.DaysInMonth(start.Year, start.Month), 23, 59, 59);
-          startTimestamp = new DateTimeOffset(start).ToUnixTimeMilliseconds();
-          endTimestamp = new DateTimeOffset(endOfMonth).ToUnixTimeMilliseconds();
+          endYear = start.Year;
+          endMonth = start.Month;
         }
         else if (DateTime.TryParse(endDate + "-01", out var end))
         {
-          var endOfEndMonth = new DateTime(end.Year, end.Month, DateTime.DaysInMonth(end.Year, end.Month), 23, 59, 59);
-          startTimestamp = new DateTimeOffset(start).ToUnixTimeMilliseconds();
-          endTimestamp = new DateTimeOffset(endOfEndMonth).ToUnixTimeMilliseconds();
+          endYear = end.Year;
+          endMonth = end.Month;
         }
         else
         {
           return BadRequest("Invalid endDate format. Expected YYYY-MM");
         }
 
-        query = query.Where(t => t.Date >= startTimestamp && t.Date <= endTimestamp);
+        // Compare months as YYYYMM so a range can span a year boundary
+        var startKey = start.Year * 100 + start.Month;
+        var endKey = endYear * 100 + endMonth;
+
+        query = query.Where(t =>
+          t.MonthlyBudget!.Year * 100 + t.MonthlyBudget.Month >= startKey &&
+          t.MonthlyBudget!.Year * 100 + t.MonthlyBudget.Month <= endKey);
       }
       else
       {
@@ -58,8 +62,9 @@ public class TransactionsController : ControllerBase
     }
 
     return await query
-      .OrderBy(t => t.Date)
-      .Reverse()
+      .OrderByDescending(t => t.MonthlyBudget!.Year)
+      .ThenByDescending(t => t.MonthlyBudget!.Month)
+      .ThenByDescending(t => t.Date)
       .ToListAsync();
   }
 
@@ -96,11 +101,11 @@ public class TransactionsController : ControllerBase
       Title = dto.Title,
       Date = dto.Date,
       AccountId = dto.AccountId,
-      CategoryId = dto.CategoryId
+      MonthlyBudgetId = dto.MonthlyBudgetId,
+      ProjectedExpenseId = dto.ProjectedExpenseId
     }).ToList();
     if (transactionList.Count == 0) return BadRequest();
 
-    var sixMonthsAgo = DateTimeOffset.UtcNow.AddMonths(-6).ToUnixTimeMilliseconds();
     var allNewTransactions = new List<Transaction>();
     var allDuplicates = new List<Transaction>();
     var inDatabaseDuplicates = new List<Transaction>();
@@ -117,8 +122,10 @@ public class TransactionsController : ControllerBase
 
       if (bankTransactionIds.Count > 0)
       {
+        // Date is now a day of the month, so the old six-month cutoff no longer
+        // applies; the bank's transaction id is the duplicate check on its own.
         var existingTransactions = await _context.Transactions
-          .Where(t => t.Date >= sixMonthsAgo && bankTransactionIds.Contains(t.BankTransactionId))
+          .Where(t => bankTransactionIds.Contains(t.BankTransactionId))
           .Include(t => t.Account)
           .ToListAsync();
 

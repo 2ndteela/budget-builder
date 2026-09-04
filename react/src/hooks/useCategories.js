@@ -6,20 +6,13 @@ import {
 
 const baseURL = 'http://localhost:5102/category'
 
-export default function useCategories(startDate = null, endDate = null, filterCategories = false) {
+export default function useCategories() {
   const queryClient = useQueryClient()
 
   const { data: categories, isLoading, error } = useQuery({
-    queryKey: ['categories', startDate, endDate],
+    queryKey: ['categories'],
     queryFn: async () => {
-      let url = baseURL
-      if (startDate && filterCategories) {
-        url += `?startDate=${encodeURIComponent(startDate)}`
-        if (endDate) url += `&endDate=${encodeURIComponent(endDate)}`
-      }
-
-
-      const resp = await fetch(url)
+      const resp = await fetch(baseURL)
       if (!resp.ok) throw new Error('Failed to fetch categories')
       return await resp.json()
     }

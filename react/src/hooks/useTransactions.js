@@ -73,7 +73,7 @@ export default function useTransactions() {
       return await resp.json()
     },
     onSuccess: (newTransactions) => {
-      setTransactions((old) => [...newTransactions, ...old])
+      setTransactions((old) => [...newTransactions.acceptedTransactions, ...old])
       queryClient.invalidateQueries({ queryKey: ['budget-analysis'] })
     },
     onError: () => {

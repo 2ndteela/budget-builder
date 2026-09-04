@@ -1,0 +1,83 @@
+.new-transaction-wrapper {
+  position: relative;
+}
+
+#new-transaction-button {
+  background-color: var(--color-blue-primary);
+  transition: opacity 0.3s;
+  border: none;
+  color: #E0E0E0;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+#new-transaction-button:hover,
+.new-transaction-buttons button:hover {
+  opacity: 0.8;
+}
+
+.new-transaction-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background-color: #2C2C2C;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 300px;
+  z-index: 10;
+}
+
+.new-transaction-menu input,
+.new-transaction-menu select {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #E0E0E0;
+  padding: 8px;
+  font-size: 14px;
+}
+
+.new-transaction-menu select option {
+  background-color: #2C2C2C;
+  color: #E0E0E0;
+}
+
+.new-transaction-hint {
+  color: #E0E0E0;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.date-inputs,
+.new-transaction-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.date-inputs select,
+.date-inputs input,
+.new-transaction-buttons button {
+  flex: 1;
+}
+
+.new-transaction-buttons button {
+  padding: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.3s;
+}
+
+.new-transaction-buttons button:first-child {
+  background-color: var(--color-blue-primary);
+  color: #E0E0E0;
+}
+
+.new-transaction-buttons button:last-child {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #E0E0E0;
+}

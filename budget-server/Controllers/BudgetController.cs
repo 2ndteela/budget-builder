@@ -19,71 +19,26 @@ public class BudgetController : ControllerBase
   [HttpGet("analysis")]
   public async Task<ActionResult<BudgetAnalysisDTO>> GetBudgetAnalysis([FromQuery] string? startDate, [FromQuery] string? endDate)
   {
+    var budgets = await LoadBudgetsInRange(startDate, endDate);
+
     var categories = await _context.Categories
-      .Include(c => c.ProjectedExpenses)
-      .Include(c => c.Transactions).ThenInclude(t => t.ProjectedExpense)
+      .OrderBy(c => c.Name)
       .ToListAsync();
 
-    long? startTimestamp = null;
-    long? endTimestamp = null;
-    DateTime? start = null;
-    DateTime? end = null;
-    List<int> monthsInRange = new List<int>();
-
-    if (!string.IsNullOrEmpty(startDate))
-    {
-      if (DateTime.TryParse(startDate + "-01", out var startParsed))
-      {
-        start = startParsed;
-        if (string.IsNullOrEmpty(endDate))
-        {
-          var endOfMonth = new DateTime(startParsed.Year, startParsed.Month, DateTime.DaysInMonth(startParsed.Year, startParsed.Month), 23, 59, 59);
-          end = endOfMonth;
-          startTimestamp = new DateTimeOffset(startParsed).ToUnixTimeMilliseconds();
-          endTimestamp = new DateTimeOffset(endOfMonth).ToUnixTimeMilliseconds();
-        }
-        else if (DateTime.TryParse(endDate + "-01", out var endParsed))
-        {
-          var endOfEndMonth = new DateTime(endParsed.Year, endParsed.Month, DateTime.DaysInMonth(endParsed.Year, endParsed.Month), 23, 59, 59);
-          end = endOfEndMonth;
-          startTimestamp = new DateTimeOffset(startParsed).ToUnixTimeMilliseconds();
-          endTimestamp = new DateTimeOffset(endOfEndMonth).ToUnixTimeMilliseconds();
-        }
-
-        monthsInRange = GetMonthsInRange(start.Value, end.Value);
-      }
-    }
+    var expensesInRange = budgets.SelectMany(b => b.ProjectedExpenses).ToList();
 
     var categoryDTOs = categories.Select(cat =>
     {
-      var filteredExpenses = cat.ProjectedExpenses.AsEnumerable();
-      if (start.HasValue && end.HasValue)
+      var categoryExpenses = expensesInRange.Where(pe => pe.CategoryId == cat.Id).ToList();
+
+      var projectedExpensesWithTransactions = categoryExpenses.Select(pe => new ProjectedExpenseWithTransactionsDTO
       {
-        filteredExpenses = filteredExpenses.Where(pe => IsExpenseInRange(pe, monthsInRange, start.Value));
-      }
-
-      var projectedExpensesList = filteredExpenses.ToList();
-      var projectedTotal = CalculateProjectedTotal(projectedExpensesList, monthsInRange);
-
-      var filteredTransactions = cat.Transactions.AsEnumerable();
-      if (startTimestamp.HasValue && endTimestamp.HasValue)
-      {
-        filteredTransactions = filteredTransactions.Where(t => t.Date >= startTimestamp.Value && t.Date <= endTimestamp.Value);
-      }
-
-      var groupedTransactions = filteredTransactions
-        .GroupBy(t => t.Title)
-        .Select(g => new Transaction
-        {
-          Id = g.First().Id,
-          Title = g.Key,
-          Amount = g.Sum(t => t.Amount),
-          Date = g.First().Date,
-          CategoryId = g.First().CategoryId
-        })
-        .ToList();
-
-      var transactionTotal = groupedTransactions.Sum(t => (int)t.Amount);
+        Id = pe.Id,
+        Name = pe.Name,
+        Value = pe.Value,
+        TransactionTotal = pe.Transactions.Sum(t => t.Amount),
+        Transactions = pe.Transactions
+      }).ToList();
 
       return new CategoryDTO
       {
@@ -91,13 +46,15 @@ public class BudgetController : ControllerBase
         Name = cat.Name,
         Color = cat.Color,
         IsIncome = cat.IsIncome,
-        ProjectedExpenses = projectedExpensesList,
-        Transactions = groupedTransactions,
-        ProjectedTotal = projectedTotal,
-        TransactionTotal = transactionTotal
+        ProjectedExpenses = projectedExpensesWithTransactions,
+        // A transaction reaches its category through its projected expense, so an
+        // unmatched transaction has no category to be listed under. They come back
+        // at the top level of the response instead.
+        UnmatchedTransactions = new List<Transaction>(),
+        ProjectedTotal = (int)categoryExpenses.Sum(pe => pe.Value),
+        TransactionTotal = (int)categoryExpenses.SelectMany(pe => pe.Transactions).Sum(t => t.Amount)
       };
     })
-    .OrderBy(c => c.Name)
     .ToList();
 
     var totalIncome = categoryDTOs
@@ -109,74 +66,137 @@ public class BudgetController : ControllerBase
       .Sum(c => c.TransactionTotal);
 
     var projectedExpense = categoryDTOs
-    .Where(c => !c.IsIncome)
-    .Sum(c => c.ProjectedTotal);
+      .Where(c => !c.IsIncome)
+      .Sum(c => c.ProjectedTotal);
+
+    var unmatchedTransactions = budgets
+      .SelectMany(b => b.Transactions)
+      .Where(t => t.ProjectedExpenseId == null)
+      .ToList();
 
     return Ok(new BudgetAnalysisDTO
     {
       Categories = categoryDTOs,
       TotalIncome = totalIncome,
       TotalExpense = totalExpense,
-      ProjectedExpense = projectedExpense
+      ProjectedExpense = projectedExpense,
+      UnmatchedTransactions = unmatchedTransactions
     });
   }
 
-  private List<int> GetMonthsInRange(DateTime start, DateTime end)
+  [HttpGet("burnup")]
+  public async Task<ActionResult<BurnUpChartDTO>> GetBurnUpChart([FromQuery] string? startDate, [FromQuery] string? endDate)
   {
-    var months = new List<int>();
-    var current = start;
+    var budgets = await LoadBudgetsInRange(startDate, endDate);
 
-    while (current <= end)
+    if (budgets.Count == 0)
     {
-      months.Add(current.Month);
-      current = current.AddMonths(1);
+      var now = DateTime.Now;
+      var fallback = await _context.MonthlyBudgets
+        .Include(mb => mb.ProjectedExpenses).ThenInclude(pe => pe.Category)
+        .Include(mb => mb.ProjectedExpenses).ThenInclude(pe => pe.Transactions)
+        .Include(mb => mb.Transactions)
+        .Where(mb => mb.Year == now.Year && mb.Month == now.Month)
+        .ToListAsync();
+
+      budgets = fallback;
     }
 
-    return months.Distinct().ToList();
-  }
+    var expenses = budgets.SelectMany(b => b.ProjectedExpenses).ToList();
 
-  private bool IsExpenseInRange(ProjectedExpense expense, List<int> monthsInRange, DateTime rangeStart)
-  {
-    if (expense.Expiration != 0 && rangeStart.Year > expense.Expiration)
-    {
-      return false;
-    }
+    var projectedExpenseTotal = (int)expenses
+      .Where(pe => pe.Category != null && !pe.Category.IsIncome)
+      .Sum(pe => pe.Value);
 
-    var frequency = expense.Frequency;
-    if (string.IsNullOrEmpty(frequency))
-    {
-      return true;
-    }
-
-    var expenseMonths = frequency.Split(',', StringSplitOptions.RemoveEmptyEntries)
-      .Select(int.Parse)
+    // Only matched transactions can be split into income and expense, since the
+    // category is reached through the projected expense.
+    var dated = expenses
+      .SelectMany(pe => pe.Transactions.Select(t => new
+      {
+        Date = ToDate(pe.MonthlyBudget!, t.Date),
+        t.Amount,
+        IsIncome = pe.Category?.IsIncome ?? false
+      }))
       .ToList();
 
-    return expenseMonths.Any(m => monthsInRange.Contains(m));
-  }
+    var days = budgets
+      .OrderBy(b => b.Year).ThenBy(b => b.Month)
+      .SelectMany(b => Enumerable
+        .Range(1, DateTime.DaysInMonth(b.Year, b.Month))
+        .Select(day => new DateTime(b.Year, b.Month, day)))
+      .ToList();
 
-  private int CalculateProjectedTotal(List<ProjectedExpense> expenses, List<int> monthsInRange)
-  {
-    int total = 0;
+    var dataPoints = new List<BurnUpDataPoint>();
+    var dailyProjectedRate = days.Count > 0 ? (decimal)projectedExpenseTotal / days.Count : 0;
+    var lastTransactionDate = dated.Count > 0 ? dated.Max(d => d.Date) : days.FirstOrDefault();
 
-    foreach (var expense in expenses)
+    for (var i = 0; i < days.Count; i++)
     {
-      var frequency = expense.Frequency;
-      if (string.IsNullOrEmpty(frequency))
-      {
-        total += (int)expense.Value * monthsInRange.Count;
-      }
-      else
-      {
-        var expenseMonths = frequency.Split(',', StringSplitOptions.RemoveEmptyEntries)
-          .Select(int.Parse)
-          .ToList();
+      var day = days[i];
+      var cumulativeProjected = (int)(dailyProjectedRate * (i + 1));
 
-        var occurrences = monthsInRange.Count(m => expenseMonths.Contains(m));
-        total += (int)expense.Value * occurrences;
+      int? cumulativeExpense = null;
+      int? cumulativeIncome = null;
+
+      if (day <= lastTransactionDate)
+      {
+        cumulativeExpense = (int)dated.Where(d => !d.IsIncome && d.Date <= day).Sum(d => d.Amount);
+        cumulativeIncome = (int)dated.Where(d => d.IsIncome && d.Date <= day).Sum(d => d.Amount);
       }
+
+      dataPoints.Add(new BurnUpDataPoint
+      {
+        Date = day.ToString("MM/dd"),
+        Timestamp = new DateTimeOffset(day).ToUnixTimeMilliseconds(),
+        CumulativeProjected = cumulativeProjected,
+        CumulativeActual = cumulativeExpense,
+        CumulativeIncome = cumulativeIncome
+      });
     }
 
-    return total;
+    return Ok(new BurnUpChartDTO
+    {
+      DataPoints = dataPoints,
+      ProjectedTotal = projectedExpenseTotal
+    });
+  }
+
+  // Loads every monthly budget whose month falls in [startDate, endDate], both
+  // formatted YYYY-MM. An empty startDate means every budget on record.
+  private async Task<List<MonthlyBudget>> LoadBudgetsInRange(string? startDate, string? endDate)
+  {
+    var query = _context.MonthlyBudgets
+      .Include(mb => mb.ProjectedExpenses).ThenInclude(pe => pe.Category)
+      .Include(mb => mb.ProjectedExpenses).ThenInclude(pe => pe.Transactions)
+      .Include(mb => mb.Transactions)
+      .AsQueryable();
+
+    if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate + "-01", out var start))
+    {
+      var end = start;
+      if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate + "-01", out var endParsed))
+      {
+        end = endParsed;
+      }
+
+      // Compare months as YYYYMM so a range can span a year boundary
+      var startKey = start.Year * 100 + start.Month;
+      var endKey = end.Year * 100 + end.Month;
+
+      query = query.Where(mb => mb.Year * 100 + mb.Month >= startKey && mb.Year * 100 + mb.Month <= endKey);
+    }
+
+    return await query
+      .OrderBy(mb => mb.Year).ThenBy(mb => mb.Month)
+      .ToListAsync();
+  }
+
+  // Transaction.Date is a day of the month; the budget supplies month and year
+  private static DateTime ToDate(MonthlyBudget budget, int day)
+  {
+    var daysInMonth = DateTime.DaysInMonth(budget.Year, budget.Month);
+    var clamped = Math.Clamp(day, 1, daysInMonth);
+
+    return new DateTime(budget.Year, budget.Month, clamped);
   }
 }

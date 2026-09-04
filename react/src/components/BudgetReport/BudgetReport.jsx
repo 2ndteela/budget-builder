@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import LoadingSpinner from '../../components/shared/LoadingSpinner/LoadingSpinner'
-import useBudget from '../../hooks/useBudget'
+import useAppData from '../../DataContext/useAppData'
+import BurnUpChart from '../BurnUpChart/BurnUpChart'
 import './budgetReport.css'
 import { BiCaretDown } from "react-icons/bi";
 
 export default function BudgetReport() {
-  const { loading, budget } = useBudget()
+  const { budget: { loading, budget } } = useAppData()
   const [expandedRows, setExpandedRows] = useState(new Set())
   const [sortCondition, setSortCondition] = useState('name')
 
@@ -64,6 +65,7 @@ export default function BudgetReport() {
 
   return loading ? <LoadingSpinner /> : (
     <div className="budget-report">
+
       <div className="budget-summary">
         <div className="summary-item">
           <span>Total Income:</span>
@@ -84,20 +86,21 @@ export default function BudgetReport() {
           </span>
         </div>
       </div>
+      <BurnUpChart />
 
       <table className="budget-table">
         <thead>
           <tr>
             <th></th>
             <th className="sortable" onClick={() => setNewSortCondition('name')} >
-              Category {sortCondition?.includes('name') && <BiCaretDown style={{transform: sortCondition.includes('reversed') ? 'rotate(180deg)' : 'none'}} />}
+              Category {sortCondition?.includes('name') && <BiCaretDown style={{ transform: sortCondition.includes('reversed') ? 'rotate(180deg)' : 'none' }} />}
             </th>
             <th>Projected</th>
             <th className="sortable" onClick={() => setNewSortCondition('value')} >
-              Actual {sortCondition?.includes('value') && <BiCaretDown style={{transform: sortCondition.includes('reversed') ? 'rotate(180deg)' : 'none'}} />}
+              Actual {sortCondition?.includes('value') && <BiCaretDown style={{ transform: sortCondition.includes('reversed') ? 'rotate(180deg)' : 'none' }} />}
             </th>
             <th className="sortable" onClick={() => setNewSortCondition('difference')} >
-              Difference {sortCondition?.includes('difference') && <BiCaretDown style={{transform: sortCondition.includes('reversed') ? 'rotate(180deg)' : 'none'}} />}
+              Difference {sortCondition?.includes('difference') && <BiCaretDown style={{ transform: sortCondition.includes('reversed') ? 'rotate(180deg)' : 'none' }} />}
             </th>
           </tr>
         </thead>
@@ -132,30 +135,47 @@ export default function BudgetReport() {
                   <>
                     {category.projectedExpenses?.length > 0 && (
                       <>
-                        <tr className="detail-header">
-                          <td></td>
-                          <td colSpan="4">Projected Expenses</td>
-                        </tr>
-                        {category.projectedExpenses.map(pe => (
-                          <tr key={`pe-${pe.id}`} className="detail-row">
-                            <td></td>
-                            <td>{pe.name}</td>
-                            <td>{formatCurrency(pe.value)}</td>
-                            <td></td>
-                            <td></td>
-                          </tr>
-                        ))}
+                        {category.projectedExpenses.map(pe => {
+                          const transactionTotal = pe.transactionTotal || 0
+                          const projectedValue = pe.value || 0
+                          const peDifference = category.isIncome
+                            ? transactionTotal - projectedValue
+                            : projectedValue - transactionTotal
+
+                          return (
+                            <React.Fragment key={`pe-${pe.id}`}>
+                              <tr className="detail-row projected-expense-row">
+                                <td></td>
+                                <td>{pe.name}</td>
+                                <td>{formatCurrency(projectedValue)}</td>
+                                <td>{formatCurrency(transactionTotal)}</td>
+                                <td className={getTotalClass(peDifference)}>
+                                  {formatCurrency(peDifference)}
+                                </td>
+                              </tr>
+                              {pe.transactions?.length > 0 && pe.transactions.map(txn => (
+                                <tr key={`txn-${txn.id}`} className="detail-row transaction-nested">
+                                  <td></td>
+                                  <td className="nested-indent">{txn.title}</td>
+                                  <td></td>
+                                  <td>{formatCurrency(txn.amount)}</td>
+                                  <td></td>
+                                </tr>
+                              ))}
+                            </React.Fragment>
+                          )
+                        })}
                       </>
                     )}
 
-                    {category.transactions?.length > 0 && (
+                    {category.unmatchedTransactions?.length > 0 && (
                       <>
                         <tr className="detail-header">
                           <td></td>
-                          <td colSpan="4">Transactions</td>
+                          <td colSpan="4">Other Transactions</td>
                         </tr>
-                        {category.transactions.map(txn => (
-                          <tr key={`txn-${txn.id}`} className="detail-row">
+                        {category.unmatchedTransactions.map(txn => (
+                          <tr key={`unmatched-${txn.id}`} className="detail-row">
                             <td></td>
                             <td>{txn.title}</td>
                             <td></td>

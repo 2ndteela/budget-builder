@@ -139,3 +139,18 @@
 .budget-table th:nth-child(5) {
   text-align: right;
 }
+
+.projected-expense-row {
+  background: #222;
+  font-weight: 500;
+}
+
+.transaction-nested td {
+  background: #1a1a1a;
+  font-size: 13px;
+  color: #999;
+}
+
+.nested-indent {
+  padding-left: 32px !important;
+}

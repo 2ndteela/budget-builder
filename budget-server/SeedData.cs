@@ -10,6 +10,7 @@ public static class SeedData
         // Clear existing data
         context.Transactions.RemoveRange(context.Transactions);
         context.ProjectedExpenses.RemoveRange(context.ProjectedExpenses);
+        context.MonthlyBudgets.RemoveRange(context.MonthlyBudgets);
         context.Categories.RemoveRange(context.Categories);
         context.Accounts.RemoveRange(context.Accounts);
         context.SaveChanges();
@@ -41,155 +42,141 @@ public static class SeedData
         context.Categories.AddRange(categories);
         context.SaveChanges();
 
-        // Generate transactions for the past 3 months
-        var random = new Random(42); // Fixed seed for consistent demo data
-        var transactions = new List<Transaction>();
-        var now = DateTime.Now;
-        var startDate = now.AddMonths(-3);
+        var groceries = categories[0];
+        var dining = categories[1];
+        var utilities = categories[2];
+        var rent = categories[3];
+        var transportation = categories[4];
+        var entertainment = categories[5];
+        var shopping = categories[6];
+        var healthcare = categories[7];
+        var salary = categories[8];
+        var freelance = categories[9];
 
-        // Get category IDs
-        var groceriesId = categories[0].Id;
-        var diningId = categories[1].Id;
-        var utilitiesId = categories[2].Id;
-        var rentId = categories[3].Id;
-        var transportationId = categories[4].Id;
-        var entertainmentId = categories[5].Id;
-        var shoppingId = categories[6].Id;
-        var healthcareId = categories[7].Id;
-        var salaryId = categories[8].Id;
-        var freelanceId = categories[9].Id;
-
-        // Recurring monthly expenses
-        for (var month = 0; month < 3; month++)
+        // A projected expense now belongs to one month, so every month gets its own
+        // copy of the recurring plan.
+        var monthlyPlan = new (Category Category, string Name, decimal Value)[]
         {
-            var monthDate = startDate.AddMonths(month);
+            (salary, "Paycheck - TechCorp Inc", 4500.00m),
+            (freelance, "Freelance Web Design", 800.00m),
+            (rent, "Rent Payment", 1500.00m),
+            (utilities, "Electric Bill", 95.00m),
+            (utilities, "Internet Service", 65.00m),
+            (groceries, "Groceries", 600.00m),
+            (dining, "Dining Out", 250.00m),
+            (transportation, "Transportation", 200.00m),
+            (entertainment, "Entertainment", 100.00m),
+            (shopping, "Shopping", 200.00m),
+            (healthcare, "Healthcare", 100.00m)
+        };
 
-            // Salary (1st of month)
-            transactions.Add(new Transaction
-            {
-                Title = "Paycheck - TechCorp Inc",
-                Amount = 4500.00m,
-                Date = new DateTimeOffset(new DateTime(monthDate.Year, monthDate.Month, 1)).ToUnixTimeMilliseconds(),
-                AccountId = accounts[0].Id,
-                CategoryId = salaryId
-            });
+        var random = new Random(42); // Fixed seed for consistent demo data
+        var now = DateTime.Now;
+        var firstMonth = new DateTime(now.Year, now.Month, 1).AddMonths(-2);
 
-            // Rent (1st of month)
-            transactions.Add(new Transaction
-            {
-                Title = "Rent Payment",
-                Amount = 1500.00m,
-                Date = new DateTimeOffset(new DateTime(monthDate.Year, monthDate.Month, 1)).ToUnixTimeMilliseconds(),
-                AccountId = accounts[0].Id,
-                CategoryId = rentId
-            });
+        // Seed the last three months, current month included
+        for (var monthOffset = 0; monthOffset < 3; monthOffset++)
+        {
+            var monthDate = firstMonth.AddMonths(monthOffset);
+            var isCurrentMonth = monthDate.Year == now.Year && monthDate.Month == now.Month;
+            var lastDay = isCurrentMonth ? now.Day : DateTime.DaysInMonth(monthDate.Year, monthDate.Month);
 
-            // Utilities (5th of month)
-            transactions.Add(new Transaction
-            {
-                Title = "Electric Bill",
-                Amount = 85.00m + (decimal)(random.NextDouble() * 20),
-                Date = new DateTimeOffset(new DateTime(monthDate.Year, monthDate.Month, 5)).ToUnixTimeMilliseconds(),
-                AccountId = accounts[0].Id,
-                CategoryId = utilitiesId
-            });
+            var budget = new MonthlyBudget { Year = monthDate.Year, Month = monthDate.Month };
+            context.MonthlyBudgets.Add(budget);
+            context.SaveChanges();
 
-            transactions.Add(new Transaction
-            {
-                Title = "Internet Service",
-                Amount = 65.00m,
-                Date = new DateTimeOffset(new DateTime(monthDate.Year, monthDate.Month, 5)).ToUnixTimeMilliseconds(),
-                AccountId = accounts[0].Id,
-                CategoryId = utilitiesId
-            });
+            var expenses = monthlyPlan
+                .Select(plan => new ProjectedExpense
+                {
+                    Name = plan.Name,
+                    Value = plan.Value,
+                    CategoryId = plan.Category.Id,
+                    MonthlyBudgetId = budget.Id
+                })
+                .ToList();
+            context.ProjectedExpenses.AddRange(expenses);
+            context.SaveChanges();
 
-            // Freelance income (mid-month)
-            if (month == 1 || month == 2)
+            var expenseByName = expenses.ToDictionary(e => e.Name, e => e);
+            var transactions = new List<Transaction>();
+
+            void AddTransaction(string title, decimal amount, int day, string projectedExpenseName)
             {
+                if (day > lastDay) return;
+
                 transactions.Add(new Transaction
                 {
-                    Title = "Freelance Web Design",
-                    Amount = 800.00m,
-                    Date = new DateTimeOffset(new DateTime(monthDate.Year, monthDate.Month, 15)).ToUnixTimeMilliseconds(),
-                    AccountId = accounts[0].Id,
-                    CategoryId = freelanceId
+                    Title = title,
+                    Amount = amount,
+                    Date = day,
+                    AccountId = accounts[random.Next(accounts.Length)].Id,
+                    MonthlyBudgetId = budget.Id,
+                    ProjectedExpenseId = expenseByName[projectedExpenseName].Id
                 });
             }
-        }
 
-        // Generate random daily transactions
-        var merchants = new Dictionary<int, string[]>
-        {
-            { groceriesId, new[] { "Whole Foods", "Trader Joe's", "Safeway", "Target Groceries" } },
-            { diningId, new[] { "Chipotle", "Starbucks", "The Local Bistro", "Pizza Place", "Thai Restaurant" } },
-            { transportationId, new[] { "Shell Gas Station", "Uber", "Public Transit Pass", "Car Wash" } },
-            { entertainmentId, new[] { "Netflix", "Spotify", "Movie Theater", "Concert Tickets", "Gaming Store" } },
-            { shoppingId, new[] { "Amazon", "Target", "Best Buy", "Clothing Store", "Home Depot" } },
-            { healthcareId, new[] { "CVS Pharmacy", "Doctor Copay", "Dentist", "Health Insurance" } }
-        };
+            // Recurring transactions
+            AddTransaction("Paycheck - TechCorp Inc", 4500.00m, 1, "Paycheck - TechCorp Inc");
+            AddTransaction("Rent Payment", 1500.00m, 1, "Rent Payment");
+            AddTransaction("Electric Bill", 85.00m + (decimal)(random.NextDouble() * 20), 5, "Electric Bill");
+            AddTransaction("Internet Service", 65.00m, 5, "Internet Service");
 
-        var categoryFrequency = new Dictionary<int, (int min, int max)>
-        {
-            { groceriesId, (2, 3) },      // 2-3 times per week
-            { diningId, (1, 2) },          // 1-2 times per week
-            { transportationId, (1, 2) },  // 1-2 times per week
-            { entertainmentId, (0, 1) },   // 0-1 times per week
-            { shoppingId, (0, 1) },        // 0-1 times per week
-            { healthcareId, (0, 0) }       // Occasional
-        };
-
-        for (var day = 0; day < 90; day++)
-        {
-            var currentDate = startDate.AddDays(day);
-
-            foreach (var (categoryId, (minPerWeek, maxPerWeek)) in categoryFrequency)
+            if (monthOffset > 0)
             {
-                // Randomly decide if transaction happens this day based on frequency
-                var weeklyChance = (minPerWeek + maxPerWeek) / 2.0;
-                var dailyChance = weeklyChance / 7.0;
+                AddTransaction("Freelance Web Design", 800.00m, 15, "Freelance Web Design");
+            }
 
-                if (random.NextDouble() < dailyChance)
+            // Random day to day spending, matched to the month's projected expense
+            var merchants = new Dictionary<string, string[]>
+            {
+                { "Groceries", new[] { "Whole Foods", "Trader Joe's", "Safeway", "Target Groceries" } },
+                { "Dining Out", new[] { "Chipotle", "Starbucks", "The Local Bistro", "Pizza Place", "Thai Restaurant" } },
+                { "Transportation", new[] { "Shell Gas Station", "Uber", "Public Transit Pass", "Car Wash" } },
+                { "Entertainment", new[] { "Netflix", "Spotify", "Movie Theater", "Concert Tickets", "Gaming Store" } },
+                { "Shopping", new[] { "Amazon", "Target", "Best Buy", "Clothing Store", "Home Depot" } },
+                { "Healthcare", new[] { "CVS Pharmacy", "Doctor Copay", "Dentist", "Health Insurance" } }
+            };
+
+            var weeklyFrequency = new Dictionary<string, double>
+            {
+                { "Groceries", 2.5 },
+                { "Dining Out", 1.5 },
+                { "Transportation", 1.5 },
+                { "Entertainment", 0.5 },
+                { "Shopping", 0.5 },
+                { "Healthcare", 0.25 }
+            };
+
+            var amountRanges = new Dictionary<string, (double min, double spread)>
+            {
+                { "Groceries", (45.0, 60.0) },
+                { "Dining Out", (12.0, 35.0) },
+                { "Transportation", (15.0, 50.0) },
+                { "Entertainment", (10.0, 60.0) },
+                { "Shopping", (25.0, 150.0) },
+                { "Healthcare", (20.0, 100.0) }
+            };
+
+            for (var day = 1; day <= lastDay; day++)
+            {
+                foreach (var (expenseName, perWeek) in weeklyFrequency)
                 {
-                    var merchantList = merchants[categoryId];
-                    var merchant = merchantList[random.Next(merchantList.Length)];
-                    var baseAmount = categoryId switch
-                    {
-                        var id when id == groceriesId => 45.0 + random.NextDouble() * 60,
-                        var id when id == diningId => 12.0 + random.NextDouble() * 35,
-                        var id when id == transportationId => 15.0 + random.NextDouble() * 50,
-                        var id when id == entertainmentId => 10.0 + random.NextDouble() * 60,
-                        var id when id == shoppingId => 25.0 + random.NextDouble() * 150,
-                        var id when id == healthcareId => 20.0 + random.NextDouble() * 100,
-                        _ => 10.0
-                    };
+                    if (random.NextDouble() >= perWeek / 7.0) continue;
 
-                    transactions.Add(new Transaction
-                    {
-                        Title = merchant,
-                        Amount = Math.Round((decimal)baseAmount, 2),
-                        Date = new DateTimeOffset(currentDate).ToUnixTimeMilliseconds(),
-                        AccountId = accounts[random.Next(accounts.Length)].Id,
-                        CategoryId = categoryId
-                    });
+                    var merchantList = merchants[expenseName];
+                    var (min, spread) = amountRanges[expenseName];
+
+                    AddTransaction(
+                        merchantList[random.Next(merchantList.Length)],
+                        Math.Round((decimal)(min + random.NextDouble() * spread), 2),
+                        day,
+                        expenseName
+                    );
                 }
             }
 
-            // Add occasional healthcare transactions
-            if (random.NextDouble() < 0.05) // 5% chance per day
-            {
-                var healthMerchants = merchants[healthcareId];
-                transactions.Add(new Transaction
-                {
-                    Title = healthMerchants[random.Next(healthMerchants.Length)],
-                    Amount = Math.Round((decimal)(20.0 + random.NextDouble() * 100), 2),
-                    Date = new DateTimeOffset(currentDate).ToUnixTimeMilliseconds(),
-                    AccountId = accounts[random.Next(accounts.Length)].Id,
-                    CategoryId = healthcareId
-                });
-            }
+            context.Transactions.AddRange(transactions);
+            context.SaveChanges();
         }
-
-        context.Transactions.AddRange(transactions);
-        context.SaveChanges();
     }
 }

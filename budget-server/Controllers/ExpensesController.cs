@@ -17,7 +17,7 @@ public class ExpensesController : ControllerBase
   }
 
   [HttpGet]
-  public async Task<ActionResult<IEnumerable<ProjectedExpense>>> GetExpenses()
+  public async Task<ActionResult<IEnumerable<ProjectedExpense>>> GetExpenses([FromQuery] string? startDate, [FromQuery] string? endDate)
   {
     return await _context.ProjectedExpenses
       .ToListAsync();

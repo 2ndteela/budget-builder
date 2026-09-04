@@ -1,0 +1,135 @@
+#upload-csv-button {
+  background-color: var(--color-green-primary);
+  transition: opacity 0.3s;
+  border: none;
+  color: #E0E0E0;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  max-height: 32px;
+}
+
+#upload-csv-button:hover {
+  opacity: 0.8;
+}
+
+.csv-mapping-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.csv-mapping-dialog {
+  background-color: #2C2C2C;
+  padding: 24px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.csv-mapping-dialog h2 {
+  margin: 0;
+  color: #E0E0E0;
+}
+
+.csv-mapping-dialog h3 {
+  margin: 0 0 12px 0;
+  color: #E0E0E0;
+  font-size: 16px;
+}
+
+.mapping-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mapping-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mapping-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.mapping-row label,
+.mapping-row span {
+  color: #E0E0E0;
+  font-size: 14px;
+}
+
+.mapping-row select {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #E0E0E0;
+  padding: 8px;
+  font-size: 14px;
+  max-width: 400px;
+}
+
+.mapping-row select option {
+  background-color: #2C2C2C;
+  color: #E0E0E0;
+}
+
+.mapping-warning {
+  margin: 0;
+  color: var(--color-orange-primary, #FFB74D);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.csv-mapping-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.csv-mapping-buttons button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.3s;
+}
+
+.csv-mapping-buttons button:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.csv-mapping-buttons button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.csv-mapping-buttons button:first-child {
+  background-color: var(--color-blue-primary);
+  color: #E0E0E0;
+}
+
+.csv-mapping-buttons button:not(:first-child) {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #E0E0E0;
+}

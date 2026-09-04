@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import Tabs from './components/Tabs/Tabs'
 import ProjectedCosts from './components/ProjectedCosts/ProjectedCosts'
-import TrackedCosts from './components/TrackedCosts/TrackedCosts'
+import Transactions from './components/Transactions/Transactions'
 import BudgetReport from './components/BudgetReport/BudgetReport'
+import { DataProvider } from './DataContext/DataContext'
 
 const parseMonthParam = (param) => {
   const [year, month] = param.split('-').map(Number)
@@ -150,50 +151,55 @@ function App() {
   }
 
   return (
-    <div>
-      <header>
-        Budget Balancer
-      </header>
-      <div id="page-container">
-        <div id="page-content">
-          <div className='date-range-picker'>
-            <MonthRangePickerHeader date={startDate} onUpdate={handleStartDateChange} />
-            {!showEndDateRange && (
-              <button className='range-toggle-button' onClick={() => handleToggleEndDate(true)}>
-                + Add End Date
-              </button>
-            )}
-            {showEndDateRange && (
-              <>
-                <span className='range-separator'>to</span>
-                <MonthRangePickerHeader date={endDate} onUpdate={handleEndDateChange} />
-                <button className='range-toggle-button remove' onClick={() => handleToggleEndDate(false)}>
-                  ✕
+    <DataProvider
+      startDate={formatMonthParam(startDate)}
+      endDate={showEndDateRange ? formatMonthParam(endDate) : null}
+    >
+      <div>
+        <header>
+          Budget Balancer
+        </header>
+        <div id="page-container">
+          <div id="page-content">
+            <div className='date-range-picker'>
+              <MonthRangePickerHeader date={startDate} onUpdate={handleStartDateChange} />
+              {!showEndDateRange && (
+                <button className='range-toggle-button' onClick={() => handleToggleEndDate(true)}>
+                  + Add End Date
                 </button>
-              </>
-            )}
-          </div>
+              )}
+              {showEndDateRange && (
+                <>
+                  <span className='range-separator'>to</span>
+                  <MonthRangePickerHeader date={endDate} onUpdate={handleEndDateChange} />
+                  <button className='range-toggle-button remove' onClick={() => handleToggleEndDate(false)}>
+                    ✕
+                  </button>
+                </>
+              )}
+            </div>
 
-          <Tabs tabs={[
-            {
-              title: 'Planning and Management',
-              key: 'planning',
-              children: (<ProjectedCosts />),
-            },
-            {
-              title: 'Tracked Costs',
-              key: 'tracked',
-              children: (<TrackedCosts />),
-            },
-            {
-              title: 'Budget Analysis',
-              key: 'analysis',
-              children: (<BudgetReport />)
-            }
-          ]} />
+            <Tabs tabs={[
+              {
+                title: 'Planning and Management',
+                key: 'planning',
+                children: (<ProjectedCosts />),
+              },
+              {
+                title: 'Transactions',
+                key: 'transactions',
+                children: (<Transactions />),
+              },
+              {
+                title: 'Budget Analysis',
+                key: 'analysis',
+                children: (<BudgetReport />)
+              }
+            ]} />
+          </div>
         </div>
       </div>
-    </div>
+    </DataProvider>
   )
 }
 

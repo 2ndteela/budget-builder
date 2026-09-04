@@ -28,13 +28,16 @@ namespace budget_server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Accounts", (string)null);
+                    b.ToTable("Accounts");
                 });
 
             modelBuilder.Entity("budget_server.Models.Category", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Archived")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Color")
@@ -50,7 +53,27 @@ namespace budget_server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("budget_server.Models.MonthlyBudget", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Year", "Month")
+                        .IsUnique();
+
+                    b.ToTable("MonthlyBudgets");
                 });
 
             modelBuilder.Entity("budget_server.Models.ProjectedExpense", b =>
@@ -62,11 +85,8 @@ namespace budget_server.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Expiration")
+                    b.Property<int>("MonthlyBudgetId")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("Frequency")
-                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -79,7 +99,9 @@ namespace budget_server.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("ProjectedExpenses", (string)null);
+                    b.HasIndex("MonthlyBudgetId");
+
+                    b.ToTable("ProjectedExpenses");
                 });
 
             modelBuilder.Entity("budget_server.Models.Transaction", b =>
@@ -97,10 +119,10 @@ namespace budget_server.Migrations
                     b.Property<string>("BankTransactionId")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("CategoryId")
+                    b.Property<int>("Date")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("Date")
+                    b.Property<int>("MonthlyBudgetId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("ProjectedExpenseId")
@@ -114,11 +136,11 @@ namespace budget_server.Migrations
 
                     b.HasIndex("AccountId");
 
-                    b.HasIndex("CategoryId");
+                    b.HasIndex("MonthlyBudgetId");
 
                     b.HasIndex("ProjectedExpenseId");
 
-                    b.ToTable("Transactions", (string)null);
+                    b.ToTable("Transactions");
                 });
 
             modelBuilder.Entity("budget_server.Models.ProjectedExpense", b =>
@@ -129,7 +151,15 @@ namespace budget_server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("budget_server.Models.MonthlyBudget", "MonthlyBudget")
+                        .WithMany("ProjectedExpenses")
+                        .HasForeignKey("MonthlyBudgetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Category");
+
+                    b.Navigation("MonthlyBudget");
                 });
 
             modelBuilder.Entity("budget_server.Models.Transaction", b =>
@@ -140,17 +170,20 @@ namespace budget_server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("budget_server.Models.Category", "Category")
+                    b.HasOne("budget_server.Models.MonthlyBudget", "MonthlyBudget")
                         .WithMany("Transactions")
-                        .HasForeignKey("CategoryId");
+                        .HasForeignKey("MonthlyBudgetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("budget_server.Models.ProjectedExpense", "ProjectedExpense")
                         .WithMany("Transactions")
-                        .HasForeignKey("ProjectedExpenseId");
+                        .HasForeignKey("ProjectedExpenseId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Account");
 
-                    b.Navigation("Category");
+                    b.Navigation("MonthlyBudget");
 
                     b.Navigation("ProjectedExpense");
                 });
@@ -161,6 +194,11 @@ namespace budget_server.Migrations
                 });
 
             modelBuilder.Entity("budget_server.Models.Category", b =>
+                {
+                    b.Navigation("ProjectedExpenses");
+                });
+
+            modelBuilder.Entity("budget_server.Models.MonthlyBudget", b =>
                 {
                     b.Navigation("ProjectedExpenses");
 

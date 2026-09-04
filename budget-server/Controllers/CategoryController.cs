@@ -17,25 +17,12 @@ public class CategoryController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Category>>> GetCategories([FromQuery] Boolean filterCategories, [FromQuery] string? startDate, [FromQuery] string? endDate)
+    public async Task<ActionResult<IEnumerable<Category>>> GetCategories([FromQuery] Boolean includeArchived)
     {
         var categories = await _context.Categories
-            .Include(c => c.ProjectedExpenses)
+            .Where(c => includeArchived || !c.Archived)
             .OrderBy(c => c.Name)
             .ToListAsync();
-
-        if (!string.IsNullOrEmpty(startDate))
-        {
-            var (start, end) = ParseDateRange(startDate, endDate);
-            var monthsInRange = GetMonthsInRange(start, end);
-
-            foreach (var category in categories)
-            {
-                category.ProjectedExpenses = category.ProjectedExpenses
-                    .Where(pe => IsExpenseInRange(pe, monthsInRange, start) && filterCategories)
-                    .ToList();
-            }
-        }
 
         return categories;
     }
@@ -52,38 +39,17 @@ public class CategoryController : ControllerBase
         return (start, new DateTime(start.Year, start.Month, DateTime.DaysInMonth(start.Year, start.Month), 23, 59, 59));
     }
 
-    private List<int> GetMonthsInRange(DateTime start, DateTime end)
+    // A projected expense belongs to a single monthly budget, so "in range" is just
+    // whether that budget's month falls inside the requested window.
+    private bool IsExpenseInRange(ProjectedExpense expense, DateTime start, DateTime end)
     {
-        var months = new List<int>();
-        var current = start;
+        var budget = expense.MonthlyBudget;
+        if (budget == null) return false;
 
-        while (current <= end)
-        {
-            months.Add(current.Month);
-            current = current.AddMonths(1);
-        }
+        var budgetMonth = new DateTime(budget.Year, budget.Month, 1);
 
-        return months.Distinct().ToList();
-    }
-
-    private bool IsExpenseInRange(ProjectedExpense expense, List<int> monthsInRange, DateTime rangeStart)
-    {
-        if (expense.Expiration != 0 && rangeStart.Year > expense.Expiration)
-        {
-            return false;
-        }
-
-        var frequency = expense.Frequency;
-        if (string.IsNullOrEmpty(frequency))
-        {
-            return true;
-        }
-
-        var expenseMonths = frequency.Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(int.Parse)
-            .ToList();
-
-        return expenseMonths.Any(m => monthsInRange.Contains(m));
+        return budgetMonth >= new DateTime(start.Year, start.Month, 1)
+            && budgetMonth <= new DateTime(end.Year, end.Month, 1);
     }
 
     [HttpGet("{id:int}")]
@@ -137,16 +103,8 @@ public class CategoryController : ControllerBase
         .Where(ex => ex.CategoryId == category.Id)
         .ToList();
 
-        List<Transaction> projectTransactionsToUnlink = _context.Transactions
-        .Where(ex => ex.CategoryId == category.Id)
-        .ToList();
-
-        foreach (var transaction in projectTransactionsToUnlink)
-        {
-            transaction.CategoryId = null;
-            _context.Entry(transaction).State = EntityState.Modified;
-        }
-
+        // Transactions keep their monthly budget; the FK to the projected expense is
+        // set to null by the delete behaviour, leaving them unmatched.
         _context.ProjectedExpenses.RemoveRange(projectedCostsToRemove);
         _context.Categories.Remove(category);
         await _context.SaveChangesAsync();

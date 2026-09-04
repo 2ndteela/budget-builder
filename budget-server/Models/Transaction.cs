@@ -8,16 +8,21 @@ public class Transaction
     public string? BankTransactionId { get; set; }
     public decimal Amount { get; set; }
     public required string Title { get; set; }
-    public long Date { get; set; } // milliseconds since epoch
+
+    // day of the month the transaction happened. We can derive the month and year from the projected expense the transaction is associated with
+    public int Date { get; set; }
     public int AccountId { get; set; }
-    public int? CategoryId { get; set; }
+
+    // the month this transaction belongs to. Unmatched transactions have no projected
+    // expense, so the budget is what places them in time.
+    public int MonthlyBudgetId { get; set; }
     public int? ProjectedExpenseId { get; set; }
 
     [JsonIgnore]
     public Account? Account { get; set; }
 
     [JsonIgnore]
-    public Category? Category { get; set; }
+    public MonthlyBudget? MonthlyBudget { get; set; }
 
     [JsonIgnore]
     public ProjectedExpense? ProjectedExpense { get; set; }
