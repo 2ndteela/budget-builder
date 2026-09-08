@@ -1,23 +1,21 @@
 .tabs-container {
   margin-top: 24px;
-  background-color: #222;
+  background-color: var(--surface-raised);
   width: 100%;
 }
 
 .tabs-headers {
-  background-color: #2C2C2C;
+  background-color: var(--surface-panel);
 }
 
 .tabs-headers button {
   background-color: transparent;
-  border: none;
-  color: #E0E0E0;
   padding: 16px 24px;
   transition: .3s;
 }
 
 .tabs-headers button:hover {
-  background-color: #383838;
+  background-color: var(--surface-hover);
 }
 
 .tabs-body {
@@ -26,5 +24,5 @@
 }
 
 button.active-tab {
-  background-color: #222;
+  background-color: var(--surface-raised);
 }

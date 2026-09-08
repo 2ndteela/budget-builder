@@ -3,10 +3,9 @@ import { useCallback, useState, useEffect, useRef } from 'react'
 
 function ReadOnlyValue({ val, emptyDisplayValue, type, prefix, formatOptions }) {
   if (type === 'number' && val !== null && val !== undefined && val !== '') {
-    if (val === 2026) console.log(formatOptions)
     return <>{`${prefix}${Number(val).toLocaleString('en', formatOptions || {})}`}</>
   }
-  return <>{val || emptyDisplayValue}</>
+  return <div className='read-only-value'>{val || emptyDisplayValue}</div>
 }
 
 function BasicEditableField({
@@ -23,39 +22,42 @@ function BasicEditableField({
   emptyDisplayValue = ''
 }) {
 
-  return editMode ? (
-    <input
-      type={type}
-      value={value}
-      onChange={({ target }) => setValue(type === 'number' ? Number(target.value) || 0 : target.value)}
-      placeholder={placeholder}
-      min={min}
-      max={max}
-      step={step}
-    />
-  ) : <ReadOnlyValue {...{ val: value, editMode, emptyDisplayValue, type, prefix, formatOptions }} />
+  return (
+    <span className="editable-field">
+      {editMode ? (
+        <input
+          type={type}
+          value={value}
+          onChange={({ target }) => setValue(type === 'number' ? Number(target.value) || 0 : target.value)}
+          placeholder={placeholder}
+          min={min}
+          max={max}
+          step={step}
+        />
+      ) : <ReadOnlyValue {...{ val: value, editMode, emptyDisplayValue, type, prefix, formatOptions }} />}
+    </span>
+  )
 }
 
 function EditableDateField({ value, setValue, editMode }) {
-  const [dateValue, setDateValue] = useState(() => new Date(value))
-  const [inputValues, setInputValues] = useState({
-    month: '',
-    date: '',
-    year: ''
-  })
+  // draft holds the raw text while the user types (so a half-typed year isn't
+  // clobbered); null means "show whatever the value prop says".
+  const [draft, setDraft] = useState(null)
   const [showPopover, setShowPopover] = useState(false)
   const popoverRef = useRef(null)
   const triggerRef = useRef(null)
 
-  useEffect(() => {
-    const d = new Date(value)
-    setDateValue(d)
-    setInputValues({
-      month: d.getMonth() + 1,
-      date: d.getDate(),
-      year: d.getFullYear()
-    })
-  }, [value])
+  const date = new Date(value)
+  const inputValues = draft || {
+    month: date.getMonth() + 1,
+    date: date.getDate(),
+    year: date.getFullYear()
+  }
+
+  const closePopover = useCallback(() => {
+    setShowPopover(false)
+    setDraft(null)
+  }, [])
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -66,16 +68,16 @@ function EditableDateField({ value, setValue, editMode }) {
         triggerRef.current &&
         !triggerRef.current.contains(event.target)
       ) {
-        setShowPopover(false)
+        closePopover()
       }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showPopover])
+  }, [showPopover, closePopover])
 
-  const updateDateField = useCallback((field, inputValue) => {
-    setInputValues(prev => ({ ...prev, [field]: inputValue }))
+  const updateDateField = (field, inputValue) => {
+    setDraft({ ...inputValues, [field]: inputValue })
 
     if (inputValue === '' || inputValue === null) {
       return
@@ -86,7 +88,7 @@ function EditableDateField({ value, setValue, editMode }) {
       return
     }
 
-    const newDate = new Date(dateValue)
+    const newDate = new Date(value)
     if (field === 'month') {
       if (numValue >= 1 && numValue <= 12) newDate.setMonth(numValue - 1)
       else return
@@ -98,16 +100,15 @@ function EditableDateField({ value, setValue, editMode }) {
       else return
     }
 
-    setDateValue(newDate)
     setValue(newDate.getTime())
-  }, [dateValue, setValue])
+  }
 
   return editMode ? (
-    <div className="editable-date-wrapper" ref={triggerRef}>
+    <div className="editable-field editable-date-wrapper" ref={triggerRef}>
       <button
         type="button"
         className="date-trigger-button"
-        onClick={() => setShowPopover(!showPopover)}
+        onClick={() => showPopover ? closePopover() : setShowPopover(true)}
       >
         {new Date(value).toLocaleDateString()}
       </button>
@@ -145,17 +146,21 @@ function EditableDateField({ value, setValue, editMode }) {
       )}
     </div>
   ) : (
-    new Date(value).toLocaleDateString()
+    <span className="editable-field">{new Date(value).toLocaleDateString()}</span>
   )
 }
 
 function EditableSelectField({ value, setValue, editMode, options, displayValue }) {
-  return editMode ? (
-    <select value={value} onChange={({ target }) => setValue(target.value)}>
-      {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
-  ) : (
-    displayValue || value
+  return (
+    <span className="editable-field">
+      {editMode ? (
+        <select value={value} onChange={({ target }) => setValue(target.value)}>
+          {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      ) : (
+        displayValue || value
+      )}
+    </span>
   )
 }
 

@@ -1,57 +1,72 @@
+import { useMemo } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import useAppData from '../../DataContext/useAppData'
-import LoadingSpinner from '../shared/LoadingSpinner/LoadingSpinner'
 import './burnUpChart.css'
 
-export default function BurnUpChart() {
-  const { burnUp: { loading, burnUpData } } = useAppData()
+const formatCurrency = (value) => new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 0
+}).format(value || 0)
 
-  if (loading) return <LoadingSpinner />
+// recharts paints the SVG from props rather than CSS, so var() cannot be used here. Read
+// the design tokens out of the stylesheet instead of restating their values.
+function readPalette() {
+  const styles = getComputedStyle(document.documentElement)
+  const token = (name) => styles.getPropertyValue(name).trim()
 
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0
-    }).format(value)
+  return {
+    grid: token('--divider'),
+    axis: token('--text-muted'),
+    surface: token('--surface-raised'),
+    text: token('--text-bright'),
+    projected: token('--color-blue-primary'),
+    actual: token('--color-negative'),
+    income: token('--color-positive')
   }
+}
+
+export default function BurnUpChart({ dataPoints = [] }) {
+  // A multi-month range runs to a few hundred days, so thin the labels to keep them legible
+  const labelInterval = Math.max(0, Math.ceil(dataPoints.length / 12) - 1)
+  const palette = useMemo(() => readPalette(), [])
 
   return (
     <div className="burnup-chart-container">
       <h2>Expense Burn-Up</h2>
       <ResponsiveContainer width="100%" height={400}>
         <LineChart
-          data={burnUpData?.dataPoints || []}
+          data={dataPoints}
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+          <CartesianGrid strokeDasharray="3 3" stroke={palette.grid} />
           <XAxis
             dataKey="date"
-            stroke="#999"
-            tick={{ fill: '#999' }}
+            stroke={palette.axis}
+            tick={{ fill: palette.axis }}
+            interval={labelInterval}
           />
           <YAxis
-            stroke="#999"
-            tick={{ fill: '#999' }}
+            stroke={palette.axis}
+            tick={{ fill: palette.axis }}
             tickFormatter={formatCurrency}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#1a1a1a',
-              border: '1px solid #333',
-              borderRadius: '4px',
-              color: '#e5e5e5'
+              backgroundColor: palette.surface,
+              border: `1px solid ${palette.grid}`,
+              borderRadius: 0,
+              color: palette.text
             }}
             formatter={formatCurrency}
-            labelStyle={{ color: '#999' }}
+            labelStyle={{ color: palette.axis }}
           />
           <Legend
-            wrapperStyle={{ color: '#e5e5e5' }}
+            wrapperStyle={{ color: palette.text }}
           />
           <Line
             type="monotone"
             dataKey="cumulativeProjected"
-            stroke="#276cc6"
+            stroke={palette.projected}
             name="Projected Expenses"
             strokeWidth={2}
             dot={false}
@@ -59,19 +74,19 @@ export default function BurnUpChart() {
           <Line
             type="monotone"
             dataKey="cumulativeActual"
-            stroke="#ef4444"
+            stroke={palette.actual}
             name="Actual Expenses"
             strokeWidth={2}
-            dot={{ fill: '#ef4444', r: 3 }}
+            dot={{ fill: palette.actual, r: 3 }}
             connectNulls={false}
           />
           <Line
             type="monotone"
             dataKey="cumulativeIncome"
-            stroke="#22c55e"
+            stroke={palette.income}
             name="Income"
             strokeWidth={2}
-            dot={{ fill: '#22c55e', r: 3 }}
+            dot={{ fill: palette.income, r: 3 }}
             connectNulls={false}
           />
         </LineChart>

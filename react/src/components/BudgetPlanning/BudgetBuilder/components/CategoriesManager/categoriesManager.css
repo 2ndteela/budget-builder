@@ -1,0 +1,122 @@
+#categories-container {
+  width: 50%;
+  padding: 16px;
+  background-color: var(--surface-raised);
+}
+
+#categories-container h3 {
+  margin: 0;
+  color: var(--text-bright);
+}
+
+.categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.category-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: var(--surface-panel);
+  transition: background-color 0.3s;
+}
+
+.category-item:hover {
+  background: linear-gradient(90deg, var(--surface-hover) 0%, var(--surface-panel) 100%);
+}
+
+/* --bg-primary comes from the .color-<hue> utility on the swatch */
+.category-swatch {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  background-color: var(--bg-primary, var(--color-gray-primary));
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* The name is an EditableField, so the wrapper takes the flex slot */
+.category-item .editable-field {
+  flex: 1;
+  min-width: 80px;
+}
+
+.income-tag {
+  background-color: var(--color-green-transparent);
+  color: var(--color-positive);
+  padding: 2px 8px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.category-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.category-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: opacity 0.3s;
+}
+
+.category-action-btn:hover {
+  opacity: 0.7;
+}
+
+.category-action-btn.delete {
+  color: var(--color-red-primary);
+}
+
+.category-item .category-name-input,
+.category-item .category-color-select {
+  margin-right: 0;
+  min-width: 80px;
+}
+
+.category-name-input,
+.category-color-select {
+  flex: 1;
+  margin-right: 12px;
+}
+
+.category-color-select {
+  flex: 0 0 auto;
+}
+
+.new-category-section {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid var(--divider);
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.create-category-btn {
+  padding: 8px 16px;
+  white-space: nowrap;
+}
+
+.income-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}

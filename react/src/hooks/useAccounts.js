@@ -41,9 +41,6 @@ export default function useAccounts() {
     },
     onSuccess: (created) => {
       patchCache((old) => [...old, created])
-    },
-    onError: () => {
-      alert('Failed to add account')
     }
   })
 
@@ -63,9 +60,6 @@ export default function useAccounts() {
     },
     onSuccess: (updated) => {
       patchCache((old) => old.map((a) => (a.id === updated.id ? updated : a)))
-    },
-    onError: () => {
-      alert('Failed to update account')
     }
   })
 
@@ -81,18 +75,15 @@ export default function useAccounts() {
     },
     onSuccess: (id) => {
       patchCache((old) => old.filter((a) => a.id !== id))
-    },
-    onError: () => {
-      alert('Failed to delete account')
     }
   })
 
   return {
     loading: isLoading,
     error,
-    accounts: data,
-    addAccount: addAccountMutation.mutate,
-    updateAccount: updateAccountMutation.mutate,
-    deleteAccount: deleteAccountMutation.mutate
+    accounts: data || [],
+    addAccount: addAccountMutation.mutateAsync,
+    updateAccount: updateAccountMutation.mutateAsync,
+    deleteAccount: deleteAccountMutation.mutateAsync
   }
 }

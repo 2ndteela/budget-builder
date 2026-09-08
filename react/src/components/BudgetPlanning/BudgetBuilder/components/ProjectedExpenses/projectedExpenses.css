@@ -1,0 +1,102 @@
+.projected-expenses table {
+  background-color: var(--surface-raised);
+}
+
+.projected-expenses thead {
+  background-color: var(--surface-sunken);
+}
+
+.projected-expenses td {
+  padding: 4px 12px;
+}
+
+.projected-expenses th:nth-child(3),
+.projected-expenses td:nth-child(3) {
+  text-align: right;
+  width: 20%;
+}
+
+.projected-expenses th:nth-child(4),
+.projected-expenses td:nth-child(4) {
+  width: 25%;
+}
+
+.projected-expenses th:last-child,
+.projected-expenses td:last-child {
+  width: 48px;
+  text-align: center;
+}
+
+.projected-expenses .actions-cell {
+  white-space: nowrap;
+}
+
+.projected-expenses .row-action-button {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 16px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.projected-expense-table-row:hover .row-action-button,
+.projected-expenses .row-action-button.save-button,
+.projected-expenses .row-action-button.cancel-button {
+  opacity: 1;
+}
+
+.projected-expenses .row-action-button:hover {
+  opacity: 0.7;
+}
+
+/* --bg-* come from the .color-<hue> utility on the row */
+.projected-expense-table-row {
+  border-left: 3px solid var(--bg-primary, var(--color-gray-primary));
+  transition: background-color 0.3s;
+}
+
+.projected-expense-table-row:hover {
+  background: linear-gradient(90deg, var(--bg-transparent-hover, var(--color-gray-transparent-hover)) 0%, rgba(255, 255, 255, 0.01) 100%);
+}
+
+.projected-expenses input,
+.projected-expenses select {
+  width: 100%;
+}
+
+/* The combine column. A checkbox keeps its own size — the 100% above would distort it. */
+.projected-expenses .select-cell {
+  width: 32px;
+  text-align: center;
+}
+
+.projected-expenses input[type='checkbox'] {
+  width: auto;
+  cursor: pointer;
+  accent-color: var(--bg-primary, var(--color-blue-primary));
+}
+
+.projected-expenses input[type='checkbox']:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.empty-budget-row td {
+  padding: 16px 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.add-expense-button {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.projected-expenses .total-row td {
+  border-top: 1px solid var(--divider);
+  padding-top: 12px;
+}

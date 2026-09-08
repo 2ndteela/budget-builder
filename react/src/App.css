@@ -1,10 +1,11 @@
 body {
-  background-color: #121212;
+  background-color: var(--surface-page);
   padding: 0;
   margin: 0;
-  color: #E0E0E0;
+  color: var(--text-primary);
   font-family: "Quicksand", sans-serif;
   font-weight: 300;
+  font-size: 14px;
 }
 
 h1,
@@ -15,7 +16,7 @@ h5,
 h6 {
   padding: 0;
   margin: 0;
-  color: #F5F5F5;
+  color: var(--text-bright);
 }
 
 h1.sub-header,
@@ -24,12 +25,12 @@ h3.sub-header,
 h4.sub-header,
 h5.sub-header,
 h6.sub-header {
-  color: #e0e0e0bb;
+  color: var(--text-muted);
 }
 
 header {
   padding: 16px 24px;
-  background-color: #1A4D8F;
+  background-color: var(--color-blue-primary);
 }
 
 #page-container {
@@ -55,37 +56,16 @@ header {
   gap: 12px;
   margin-bottom: 24px;
   padding: 16px;
-  background-color: #1E1E1E;
-  border-radius: 8px;
+  background-color: var(--surface-raised);
 }
 
 .range-separator {
-  color: #B0B0B0;
+  color: var(--text-muted);
   font-size: 14px;
-}
-
-.range-toggle-button {
-  padding: 8px 16px;
-  background-color: #2A5F9E;
-  color: #E0E0E0;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s;
-}
-
-.range-toggle-button:hover {
-  background-color: #1A4D8F;
 }
 
 .range-toggle-button.remove {
-  background-color: #9E2A2A;
   padding: 6px 12px;
-}
-
-.range-toggle-button.remove:hover {
-  background-color: #8F1A1A;
 }
 
 .month-picker-container {
@@ -94,10 +74,9 @@ header {
 
 .month-picker-button {
   padding: 10px 20px;
-  background-color: #2C2C2C;
-  color: #E0E0E0;
-  border: 1px solid #404040;
-  border-radius: 6px;
+  background-color: var(--surface-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--field-border);
   cursor: pointer;
   font-size: 15px;
   min-width: 120px;
@@ -105,7 +84,7 @@ header {
 }
 
 .month-picker-button:hover {
-  background-color: #363636;
+  background-color: var(--surface-hover);
 }
 
 .date-menu {
@@ -114,9 +93,8 @@ header {
   left: 0;
   margin-top: 8px;
   padding: 16px;
-  background-color: #2C2C2C;
-  border: 1px solid #404040;
-  border-radius: 8px;
+  background-color: var(--surface-panel);
+  border: 1px solid var(--field-border);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   z-index: 100;
   width: 240px;
@@ -131,39 +109,27 @@ header {
 
 .month-button {
   padding: 8px 12px;
-  background-color: #1E1E1E;
-  color: #E0E0E0;
-  border: 1px solid #404040;
-  border-radius: 4px;
+  background-color: var(--surface-raised);
+  color: var(--text-primary);
+  border: 1px solid var(--field-border);
   cursor: pointer;
   font-size: 13px;
   transition: all 0.2s;
 }
 
 .month-button:hover {
-  background-color: #363636;
+  background-color: var(--surface-hover);
 }
 
 .month-button.selected {
-  background-color: #2A5F9E;
-  border-color: #1A4D8F;
+  background-color: var(--color-blue-primary);
+  border-color: var(--color-blue-primary);
 }
 
 .year-input {
   width: calc(100% - 16px);
-  padding: 8px;
-  background-color: #1E1E1E;
-  color: #E0E0E0;
-  border: 1px solid #404040;
-  border-radius: 4px;
-  font-size: 14px;
   text-align: center;
   margin-bottom: 12px;
-}
-
-.year-input:focus {
-  outline: none;
-  border-color: #2A5F9E;
 }
 
 .menu-actions {
@@ -175,27 +141,5 @@ header {
 .menu-cancel-button,
 .menu-apply-button {
   padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
   font-size: 13px;
-  transition: background-color 0.2s;
-}
-
-.menu-cancel-button {
-  background-color: #404040;
-  color: #E0E0E0;
-}
-
-.menu-cancel-button:hover {
-  background-color: #4A4A4A;
-}
-
-.menu-apply-button {
-  background-color: #2A5F9E;
-  color: #E0E0E0;
-}
-
-.menu-apply-button:hover {
-  background-color: #1A4D8F;
 }

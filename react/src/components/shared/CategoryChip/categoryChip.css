@@ -1,116 +1,26 @@
+/* Color comes from the .color-<hue> utility in index.css, which sets --bg-*.
+   Fallbacks keep a chip readable when no color class is applied. */
 .category-chip {
   padding: 8px 16px;
   border: none;
-  color: #E0E0E0;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary, var(--color-gray-secondary));
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: filter 0.2s, background-color 0.2s;
   font-size: 14px;
 }
 
-.category-chip-blue {
-  background-color: #1A2A3D;
+/* opacity: 1 cancels the global button:hover fade — chips brighten instead */
+.category-chip:hover {
+  filter: brightness(1.5);
+  opacity: 1;
 }
 
-.category-chip-blue.selected {
-  background-color: #1A4D8F;
+.category-chip.selected {
+  background-color: var(--bg-primary, var(--color-gray-primary));
+  color: #fff;
 }
 
-.category-chip-blue:hover {
-  background-color: #2560A8;
-}
-
-.category-chip-red {
-  background-color: #3D1A1A;
-}
-
-.category-chip-red.selected {
-  background-color: #8F2C2C;
-}
-
-.category-chip-red:hover {
-  background-color: #A83838;
-}
-
-.category-chip-green {
-  background-color: #1A2D20;
-}
-
-.category-chip-green.selected {
-  background-color: #2C6E3D;
-}
-
-.category-chip-green:hover {
-  background-color: #388750;
-}
-
-.category-chip-yellow {
-  background-color: #3D351A;
-}
-
-.category-chip-yellow.selected {
-  background-color: #8F7A2C;
-}
-
-.category-chip-yellow:hover {
-  background-color: #A89338;
-}
-
-.category-chip-purple {
-  background-color: #2B1A3D;
-}
-
-.category-chip-purple.selected {
-  background-color: #5A3D8F;
-}
-
-.category-chip-purple:hover {
-  background-color: #6E50A8;
-}
-
-.category-chip-pink {
-  background-color: #3D1A2D;
-}
-
-.category-chip-pink.selected {
-  background-color: #8F3D6E;
-}
-
-.category-chip-pink:hover {
-  background-color: #A85087;
-}
-
-.category-chip-orange {
-  background-color: #3D251A;
-}
-
-.category-chip-orange.selected {
-  background-color: #C85A28;
-}
-
-.category-chip-orange:hover {
-  background-color: #E06A30;
-}
-
-.category-chip-teal {
-  background-color: #1A3D35;
-}
-
-.category-chip-teal.selected {
-  background-color: #2C8F7A;
-}
-
-.category-chip-teal:hover {
-  background-color: #38A893;
-}
-
-.category-chip-gray {
-  background-color: #222;
-}
-
-.category-chip-gray.selected {
-  background-color: #2C2C2C;
-}
-
-.category-chip-gray:hover {
-  background-color: #383838;
+.category-chip.selected:hover {
+  filter: brightness(1.15);
 }

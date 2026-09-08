@@ -47,11 +47,18 @@ namespace budget_server.Migrations
                     b.Property<bool>("IsIncome")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsSystem")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IsSystem")
+                        .IsUnique()
+                        .HasFilter("\"IsSystem\" = 1");
 
                     b.ToTable("Categories");
                 });
@@ -85,6 +92,9 @@ namespace budget_server.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsCatchAll")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("MonthlyBudgetId")
                         .HasColumnType("INTEGER");
 
@@ -99,7 +109,9 @@ namespace budget_server.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("MonthlyBudgetId");
+                    b.HasIndex("MonthlyBudgetId", "IsCatchAll")
+                        .IsUnique()
+                        .HasFilter("\"IsCatchAll\" = 1");
 
                     b.ToTable("ProjectedExpenses");
                 });

@@ -21,6 +21,18 @@ public class BudgetContext : DbContext
             .HasIndex(mb => new { mb.Year, mb.Month })
             .IsUnique();
 
+        // Exactly one reserved category, and at most one catch-all expense per month, so
+        // the fallback lookups in BudgetDefaults can never find two candidates.
+        modelBuilder.Entity<Category>()
+            .HasIndex(c => c.IsSystem)
+            .IsUnique()
+            .HasFilter("\"IsSystem\" = 1");
+
+        modelBuilder.Entity<ProjectedExpense>()
+            .HasIndex(pe => new { pe.MonthlyBudgetId, pe.IsCatchAll })
+            .IsUnique()
+            .HasFilter("\"IsCatchAll\" = 1");
+
         modelBuilder.Entity<Transaction>()
             .HasOne(t => t.Account)
             .WithMany(a => a.Transactions)

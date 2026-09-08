@@ -42,6 +42,18 @@ public static class SeedData
         context.Categories.AddRange(categories);
         context.SaveChanges();
 
+        // The wipe above takes the reserved row with it, so put it back. Every write path
+        // resolves an absent category to this row, so a database without it is broken.
+        var unassigned = new Category
+        {
+            Name = BudgetDefaults.UnassignedName,
+            Color = BudgetDefaults.UnassignedColor,
+            IsIncome = false,
+            IsSystem = true
+        };
+        context.Categories.Add(unassigned);
+        context.SaveChanges();
+
         var groceries = categories[0];
         var dining = categories[1];
         var utilities = categories[2];
@@ -94,6 +106,18 @@ public static class SeedData
                     MonthlyBudgetId = budget.Id
                 })
                 .ToList();
+
+            // Every month carries its catch-all. Unplanned spending is booked here instead
+            // of being left without a plan, which is what keeps it inside the analysis.
+            expenses.Add(new ProjectedExpense
+            {
+                Name = BudgetDefaults.UnassignedName,
+                Value = 0,
+                CategoryId = unassigned.Id,
+                MonthlyBudgetId = budget.Id,
+                IsCatchAll = true
+            });
+
             context.ProjectedExpenses.AddRange(expenses);
             context.SaveChanges();
 
@@ -125,6 +149,10 @@ public static class SeedData
             {
                 AddTransaction("Freelance Web Design", 800.00m, 15, "Freelance Web Design");
             }
+
+            // Spending nobody planned for, so the demo shows the Unassigned bucket in use
+            AddTransaction("Parking Meter", 12.00m, 9, BudgetDefaults.UnassignedName);
+            AddTransaction("Hardware Store", 43.75m, 21, BudgetDefaults.UnassignedName);
 
             // Random day to day spending, matched to the month's projected expense
             var merchants = new Dictionary<string, string[]>

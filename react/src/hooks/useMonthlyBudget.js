@@ -6,7 +6,7 @@ import {
 
 export default function useMonthlyBudget(startDate, endDate) {
   const baseURL = 'http://localhost:5102/monthly-budget'
-  const expensesURL = 'http://localhost:5102/expenses'
+  const expensesURL = 'http://localhost:5102/projected-expenses'
   const queryClient = useQueryClient()
   const queryKey = ['monthly-budget', startDate, endDate]
 
@@ -26,6 +26,11 @@ export default function useMonthlyBudget(startDate, endDate) {
   const patchBudgets = (updater) => {
     queryClient.setQueryData(queryKey, (old) => old ? updater(old) : old)
   }
+
+  // The flat projected-expenses list backs the transaction-matching dropdowns, so it has to
+  // follow along whenever the budgets' expenses change.
+  const invalidateProjectedExpenses = () =>
+    queryClient.invalidateQueries({ queryKey: ['projected-expenses'] })
 
   const createMonthlyBudgetMutation = useMutation({
     mutationFn: async ({ month, year }) => {
@@ -68,6 +73,7 @@ export default function useMonthlyBudget(startDate, endDate) {
       patchBudgets((old) => old.map((budget) => budget.id === created.monthlyBudgetId
         ? { ...budget, projectedExpenses: [...(budget.projectedExpenses || []), created] }
         : budget))
+      invalidateProjectedExpenses()
     }
   })
 
@@ -88,6 +94,7 @@ export default function useMonthlyBudget(startDate, endDate) {
         projectedExpenses: (budget.projectedExpenses || []).map((expense) =>
           expense.id === updated.id ? updated : expense)
       })))
+      invalidateProjectedExpenses()
     }
   })
 
@@ -102,19 +109,53 @@ export default function useMonthlyBudget(startDate, endDate) {
         ...budget,
         projectedExpenses: (budget.projectedExpenses || []).filter((expense) => expense.id !== id)
       })))
+      invalidateProjectedExpenses()
+    }
+  })
+
+  // One request rather than a create plus N deletes: the server moves the sources'
+  // transactions onto the combined expense, which the delete route would not do.
+  const combineProjectedExpensesMutation = useMutation({
+    mutationFn: async (params) => {
+      const response = await fetch(`${expensesURL}/combine`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      })
+
+      if (!response.ok) throw new Error('Failed to combine projected expenses')
+      return { created: await response.json(), sourceExpenseIds: params.sourceExpenseIds }
+    },
+    onSuccess: ({ created, sourceExpenseIds }) => {
+      const removed = new Set(sourceExpenseIds)
+
+      patchBudgets((old) => old.map((budget) => budget.id === created.monthlyBudgetId
+        ? {
+          ...budget,
+          projectedExpenses: [
+            ...(budget.projectedExpenses || []).filter((expense) => !removed.has(expense.id)),
+            created
+          ],
+          // The transactions moved with them, so they point at the combined expense now
+          transactions: (budget.transactions || []).map((transaction) =>
+            removed.has(transaction.projectedExpenseId)
+              ? { ...transaction, projectedExpenseId: created.id }
+              : transaction)
+        }
+        : budget))
+      invalidateProjectedExpenses()
     }
   })
 
   return {
     loading: isLoading,
-    isLoading,
     error,
     monthlyBudgets,
     createNewMonthlyBudget: (month, year) => createMonthlyBudgetMutation.mutateAsync({ month, year }),
     deleteMonthlyBudget: deleteMonthlyBudgetMutation.mutateAsync,
     addNewProjectedExpense: addProjectedExpenseMutation.mutateAsync,
-    saveNewProjectedExpense: addProjectedExpenseMutation.mutateAsync,
     updateProjectedExpense: updateProjectedExpenseMutation.mutateAsync,
-    deleteProjectedExpense: deleteProjectedExpenseMutation.mutateAsync
+    deleteProjectedExpense: deleteProjectedExpenseMutation.mutateAsync,
+    combineProjectedExpenses: combineProjectedExpensesMutation.mutateAsync
   }
 }

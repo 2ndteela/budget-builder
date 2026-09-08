@@ -1,0 +1,88 @@
+.suggestions-container {
+  margin-bottom: 16px;
+}
+
+.suggestions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  padding-inline-end: 0;
+}
+
+.suggestions-header h4 {
+  margin: 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.suggestions-table {
+  background-color: var(--surface-raised);
+}
+
+.suggestions-table th:nth-child(3) {
+  text-align: right;
+  width: 20%;
+}
+
+.suggestions-table th:nth-child(4) {
+  width: 25%;
+}
+
+.suggestions-table th:last-child {
+  width: 48px;
+  text-align: center;
+}
+
+/* The combine column. A checkbox keeps its own size, unlike the row's text fields. */
+.suggestions-table .select-cell {
+  width: 32px;
+  text-align: center;
+}
+
+.suggestions-table input[type='checkbox'] {
+  cursor: pointer;
+  accent-color: var(--bg-primary, var(--color-blue-primary));
+}
+
+.combine-suggestions-row td {
+  padding: 4px 12px;
+}
+
+.combine-suggestions-row input,
+.combine-suggestions-row select {
+  width: 100%;
+}
+
+/* --bg-primary comes from the .color-<hue> utility on the row */
+.suggested-expense-row {
+  border-left: 3px solid var(--bg-primary, var(--color-gray-primary));
+}
+
+.suggested-expense-row td {
+  padding: 4px 12px;
+}
+
+.suggested-expense-row td:nth-child(3) {
+  text-align: right;
+}
+
+.suggested-expense-row:hover {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+}
+
+.suggested-expense-row .row-action-button {
+  opacity: 0;
+}
+
+.suggested-expense-row:hover .row-action-button {
+  opacity: 1;
+}
+
+.empty-suggestions-row td {
+  padding: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}

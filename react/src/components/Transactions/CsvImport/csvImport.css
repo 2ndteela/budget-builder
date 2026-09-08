@@ -1,21 +1,10 @@
 #upload-csv-button {
-  background-color: var(--color-green-primary);
-  transition: opacity 0.3s;
-  border: none;
-  color: #E0E0E0;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-size: 14px;
   white-space: nowrap;
   display: flex;
   align-items: center;
   gap: 6px;
   margin-left: auto;
   max-height: 32px;
-}
-
-#upload-csv-button:hover {
-  opacity: 0.8;
 }
 
 .csv-mapping-overlay {
@@ -32,7 +21,7 @@
 }
 
 .csv-mapping-dialog {
-  background-color: #2C2C2C;
+  background-color: var(--surface-panel);
   padding: 24px;
   max-width: 600px;
   width: 90%;
@@ -45,12 +34,12 @@
 
 .csv-mapping-dialog h2 {
   margin: 0;
-  color: #E0E0E0;
+  color: var(--text-primary);
 }
 
 .csv-mapping-dialog h3 {
   margin: 0 0 12px 0;
-  color: #E0E0E0;
+  color: var(--text-primary);
   font-size: 16px;
 }
 
@@ -75,27 +64,17 @@
 
 .mapping-row label,
 .mapping-row span {
-  color: #E0E0E0;
+  color: var(--text-primary);
   font-size: 14px;
 }
 
 .mapping-row select {
-  background-color: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #E0E0E0;
-  padding: 8px;
-  font-size: 14px;
   max-width: 400px;
-}
-
-.mapping-row select option {
-  background-color: #2C2C2C;
-  color: #E0E0E0;
 }
 
 .mapping-warning {
   margin: 0;
-  color: var(--color-orange-primary, #FFB74D);
+  color: var(--color-orange-primary);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -109,27 +88,12 @@
 .csv-mapping-buttons button {
   flex: 1;
   padding: 10px;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  transition: opacity 0.3s;
-}
-
-.csv-mapping-buttons button:hover:not(:disabled) {
-  opacity: 0.8;
 }
 
 .csv-mapping-buttons button:disabled {
   opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.csv-mapping-buttons button:first-child {
-  background-color: var(--color-blue-primary);
-  color: #E0E0E0;
 }
 
 .csv-mapping-buttons button:not(:first-child) {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #E0E0E0;
+  background-color: var(--color-gray-transparent-hover);
 }

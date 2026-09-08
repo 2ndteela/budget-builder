@@ -2,13 +2,34 @@ import React, { useState, useMemo, useCallback } from 'react'
 import LoadingSpinner from '../../components/shared/LoadingSpinner/LoadingSpinner'
 import useAppData from '../../DataContext/useAppData'
 import BurnUpChart from '../BurnUpChart/BurnUpChart'
+import buildBudgetAnalysis from './budgetAnalysis'
 import './budgetReport.css'
 import { BiCaretDown } from "react-icons/bi";
 
+const formatCurrency = (amount) => new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD'
+}).format(amount || 0)
+
+const formatDate = (date) => new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric'
+}).format(date)
+
+function getTotalClass(total) {
+  if (total === 0) return ''
+  return total >= 0 ? 'income' : 'expense'
+}
+
 export default function BudgetReport() {
-  const { budget: { loading, budget } } = useAppData()
+  const { monthlyBudgets: { loading, monthlyBudgets }, categories: { categories } } = useAppData()
   const [expandedRows, setExpandedRows] = useState(new Set())
+  const [expandedGroups, setExpandedGroups] = useState(new Set())
   const [sortCondition, setSortCondition] = useState('name')
+
+  const analysis = useMemo(
+    () => buildBudgetAnalysis(monthlyBudgets, categories),
+    [monthlyBudgets, categories])
 
   const toggleRow = (categoryId) => {
     setExpandedRows(prev => {
@@ -19,18 +40,16 @@ export default function BudgetReport() {
     })
   }
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount)
+  const toggleGroup = (groupKey) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(groupKey)) next.delete(groupKey)
+      else next.add(groupKey)
+      return next
+    })
   }
 
-  function getTotalClass(total) {
-    if (total === 0) return ''
-    return total >= 0 ? 'income' : 'expense'
-  }
-  const netBalance = (budget?.totalIncome || 0) - (budget?.totalExpense || 0)
+  const netBalance = analysis.totalIncome - analysis.totalExpense
 
   const setNewSortCondition = useCallback((newCondition) => {
     if (!sortCondition) setSortCondition(newCondition)
@@ -42,7 +61,7 @@ export default function BudgetReport() {
   }, [sortCondition])
 
   const sortedCategories = useMemo(() => {
-    const categories = budget?.categories || []
+    const categories = analysis.categories
     if (!sortCondition) return categories
 
     const sorted = [...categories]
@@ -61,23 +80,34 @@ export default function BudgetReport() {
 
     if (sortCondition.includes('reversed')) sorted.reverse()
     return sorted
-  }, [budget, sortCondition])
+  }, [analysis, sortCondition])
 
-  return loading ? <LoadingSpinner /> : (
+  if (loading) return <LoadingSpinner />
+
+  if (monthlyBudgets.length === 0) {
+    return (
+      <div className="budget-report">
+        <p className="budget-report-empty">
+          No monthly budgets in this date range. Create one in Planning and Management to see the analysis.
+        </p>
+      </div>
+    )
+  }
+
+  return (
     <div className="budget-report">
-
       <div className="budget-summary">
         <div className="summary-item">
           <span>Total Income:</span>
-          <span className="income">{formatCurrency(budget?.totalIncome || 0)}</span>
+          <span className="income">{formatCurrency(analysis.totalIncome)}</span>
         </div>
         <div className="summary-item">
           <span>Projected Expenses:</span>
-          <span className="projection">{formatCurrency(budget?.projectedExpense || 0)}</span>
+          <span className="projection">{formatCurrency(analysis.projectedExpense)}</span>
         </div>
         <div className="summary-item">
           <span>Total Expense:</span>
-          <span className="expense">{formatCurrency(budget?.totalExpense || 0)}</span>
+          <span className="expense">{formatCurrency(analysis.totalExpense)}</span>
         </div>
         <div className="summary-item">
           <span>Net Balance:</span>
@@ -86,7 +116,8 @@ export default function BudgetReport() {
           </span>
         </div>
       </div>
-      <BurnUpChart />
+
+      <BurnUpChart dataPoints={analysis.burnUpPoints} />
 
       <table className="budget-table">
         <thead>
@@ -114,8 +145,7 @@ export default function BudgetReport() {
             return (
               <React.Fragment key={category.id}>
                 <tr
-                  key={category.id}
-                  className="category-row"
+                  className={`category-row color-${category.color || 'gray'}`}
                   onClick={() => toggleRow(category.id)}
                 >
                   <td className="expand-icon">
@@ -131,62 +161,65 @@ export default function BudgetReport() {
                   </td>
                 </tr>
 
-                {isExpanded && (
-                  <>
-                    {category.projectedExpenses?.length > 0 && (
-                      <>
-                        {category.projectedExpenses.map(pe => {
-                          const transactionTotal = pe.transactionTotal || 0
-                          const projectedValue = pe.value || 0
-                          const peDifference = category.isIncome
-                            ? transactionTotal - projectedValue
-                            : projectedValue - transactionTotal
+                {isExpanded && category.projectedExpenses.map(pe => {
+                  const peDifference = category.isIncome
+                    ? pe.transactionTotal - pe.value
+                    : pe.value - pe.transactionTotal
 
-                          return (
-                            <React.Fragment key={`pe-${pe.id}`}>
-                              <tr className="detail-row projected-expense-row">
+                  return (
+                    <React.Fragment key={`pe-${pe.id}`}>
+                      <tr className="detail-row projected-expense-row">
+                        <td></td>
+                        <td>
+                          {pe.name}
+                          {pe.monthLabel && <span className="month-tag">{pe.monthLabel}</span>}
+                        </td>
+                        <td>{formatCurrency(pe.value)}</td>
+                        <td>{formatCurrency(pe.transactionTotal)}</td>
+                        <td className={getTotalClass(peDifference)}>
+                          {formatCurrency(peDifference)}
+                        </td>
+                      </tr>
+                      {pe.transactionGroups.map(group => {
+                        const groupKey = `${pe.id}::${group.key}`
+                        const isGroupExpanded = expandedGroups.has(groupKey)
+                        // One charge is already its own breakdown, so it does not expand
+                        const isRepeated = group.transactions.length > 1
+
+                        return (
+                          <React.Fragment key={groupKey}>
+                            <tr
+                              className={`detail-row transaction-nested${isRepeated ? ' transaction-group-row' : ''}`}
+                              onClick={isRepeated ? () => toggleGroup(groupKey) : undefined}
+                            >
+                              <td></td>
+                              <td className="nested-indent">
+                                <span className="group-caret">
+                                  {isRepeated ? (isGroupExpanded ? '▼' : '▶') : ''}
+                                </span>
+                                {group.title}
+                                {isRepeated && <span className="group-count">×{group.transactions.length}</span>}
+                              </td>
+                              <td></td>
+                              <td>{formatCurrency(group.total)}</td>
+                              <td></td>
+                            </tr>
+
+                            {isRepeated && isGroupExpanded && group.transactions.map(txn => (
+                              <tr key={`txn-${txn.id}`} className="detail-row transaction-nested">
                                 <td></td>
-                                <td>{pe.name}</td>
-                                <td>{formatCurrency(projectedValue)}</td>
-                                <td>{formatCurrency(transactionTotal)}</td>
-                                <td className={getTotalClass(peDifference)}>
-                                  {formatCurrency(peDifference)}
-                                </td>
+                                <td className="nested-indent-deep">{formatDate(txn.occurredOn)}</td>
+                                <td></td>
+                                <td>{formatCurrency(txn.amount)}</td>
+                                <td></td>
                               </tr>
-                              {pe.transactions?.length > 0 && pe.transactions.map(txn => (
-                                <tr key={`txn-${txn.id}`} className="detail-row transaction-nested">
-                                  <td></td>
-                                  <td className="nested-indent">{txn.title}</td>
-                                  <td></td>
-                                  <td>{formatCurrency(txn.amount)}</td>
-                                  <td></td>
-                                </tr>
-                              ))}
-                            </React.Fragment>
-                          )
-                        })}
-                      </>
-                    )}
-
-                    {category.unmatchedTransactions?.length > 0 && (
-                      <>
-                        <tr className="detail-header">
-                          <td></td>
-                          <td colSpan="4">Other Transactions</td>
-                        </tr>
-                        {category.unmatchedTransactions.map(txn => (
-                          <tr key={`unmatched-${txn.id}`} className="detail-row">
-                            <td></td>
-                            <td>{txn.title}</td>
-                            <td></td>
-                            <td>{formatCurrency(txn.amount)}</td>
-                            <td></td>
-                          </tr>
-                        ))}
-                      </>
-                    )}
-                  </>
-                )}
+                            ))}
+                          </React.Fragment>
+                        )
+                      })}
+                    </React.Fragment>
+                  )
+                })}
               </React.Fragment>
             )
           })}

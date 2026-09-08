@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import Tabs from './components/Tabs/Tabs'
-import ProjectedCosts from './components/ProjectedCosts/ProjectedCosts'
+import BudgetPlanning from './components/BudgetPlanning/BudgetPlanning'
 import Transactions from './components/Transactions/Transactions'
 import BudgetReport from './components/BudgetReport/BudgetReport'
 import { DataProvider } from './DataContext/DataContext'
@@ -86,7 +86,7 @@ function MonthRangePickerHeader({ date, onUpdate }) {
             onChange={({ target }) => setTempYear(parseInt(target.value) || currentDate.getFullYear())}
           />
           <div className='menu-actions'>
-            <button className='menu-cancel-button' onClick={handleCancel}>Cancel</button>
+            <button className='menu-cancel-button btn-gray' onClick={handleCancel}>Cancel</button>
             <button className='menu-apply-button' onClick={handleApply}>Apply</button>
           </div>
         </div>
@@ -172,7 +172,7 @@ function App() {
                 <>
                   <span className='range-separator'>to</span>
                   <MonthRangePickerHeader date={endDate} onUpdate={handleEndDateChange} />
-                  <button className='range-toggle-button remove' onClick={() => handleToggleEndDate(false)}>
+                  <button className='range-toggle-button remove btn-red' onClick={() => handleToggleEndDate(false)}>
                     ✕
                   </button>
                 </>
@@ -183,7 +183,7 @@ function App() {
               {
                 title: 'Planning and Management',
                 key: 'planning',
-                children: (<ProjectedCosts />),
+                children: (<BudgetPlanning />),
               },
               {
                 title: 'Transactions',

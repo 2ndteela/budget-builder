@@ -4,8 +4,6 @@ import {
   useQueryClient
 } from '@tanstack/react-query'
 
-import { useState, useEffect } from 'react'
-
 const baseURL = 'http://localhost:5102/transactions'
 
 export default function useTransactions() {
@@ -14,7 +12,6 @@ export default function useTransactions() {
   const startDate = params.get('startDate')
   const endDate = params.get('endDate')
   const queryKey = ['transactions', startDate, endDate]
-  const [transactions, setTransactions] = useState([])
 
   const { data, isLoading, error } = useQuery({
     queryKey,
@@ -33,9 +30,13 @@ export default function useTransactions() {
     }
   })
 
-  useEffect(() => {
-    if (data && !isLoading && !error) setTransactions(data)
-  }, [data, isLoading, error])
+  // Apply an updater to the cached list for the current date range
+  const patchCache = (updater) => {
+    queryClient.setQueryData(queryKey, (old) => {
+      if (!old) return old
+      return updater(old)
+    })
+  }
 
   const addTransactionMutation = useMutation({
     mutationFn: async (newTransaction) => {
@@ -51,11 +52,8 @@ export default function useTransactions() {
       return await resp.json()
     },
     onSuccess: (newTransaction) => {
-      setTransactions((old) => [newTransaction, ...old])
-      queryClient.invalidateQueries({ queryKey: ['budget-analysis'] })
-    },
-    onError: () => {
-      throw new Error('Failed to add transaction')
+      patchCache((old) => [newTransaction, ...old])
+      queryClient.invalidateQueries({ queryKey: ['monthly-budget'] })
     }
   })
 
@@ -73,11 +71,8 @@ export default function useTransactions() {
       return await resp.json()
     },
     onSuccess: (newTransactions) => {
-      setTransactions((old) => [...newTransactions.acceptedTransactions, ...old])
-      queryClient.invalidateQueries({ queryKey: ['budget-analysis'] })
-    },
-    onError: () => {
-      throw new Error('Failed to add transactions')
+      patchCache((old) => [...newTransactions.acceptedTransactions, ...old])
+      queryClient.invalidateQueries({ queryKey: ['monthly-budget'] })
     }
   })
 
@@ -95,12 +90,33 @@ export default function useTransactions() {
       return params
     },
     onSuccess: (updatedTransaction) => {
-      setTransactions((old) => old.map(t => t.id === updatedTransaction.id ? updatedTransaction : t))
-      queryClient.invalidateQueries({ queryKey: ['budget-analysis'] })
+      patchCache((old) => old.map(t => t.id === updatedTransaction.id ? updatedTransaction : t))
+      queryClient.invalidateQueries({ queryKey: ['monthly-budget'] })
+    }
+  })
+
+  // Books a selection onto one plan in a single request. The response says where each row
+  // landed, since clearing the plan spreads them across each month's own Unassigned bucket.
+  const assignTransactionsMutation = useMutation({
+    mutationFn: async ({ transactionIds, projectedExpenseId }) => {
+      const resp = await fetch(`${baseURL}/assign`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ transactionIds, projectedExpenseId: projectedExpenseId || null })
+      })
+
+      if (!resp.ok) throw new Error('Failed to assign transactions')
+      return await resp.json()
     },
-    onError: (err) => {
-      console.error(err)
-      throw new Error('Failed to update transaction')
+    onSuccess: (assigned) => {
+      const expenseIdById = new Map(assigned.map((t) => [t.id, t.projectedExpenseId]))
+
+      patchCache((old) => old.map((t) => expenseIdById.has(t.id)
+        ? { ...t, projectedExpenseId: expenseIdById.get(t.id) }
+        : t))
+      queryClient.invalidateQueries({ queryKey: ['monthly-budget'] })
     }
   })
 
@@ -114,21 +130,19 @@ export default function useTransactions() {
       return id
     },
     onSuccess: (deletedId) => {
-      setTransactions((old) => old.filter(t => t.id !== deletedId))
-      queryClient.invalidateQueries({ queryKey: ['budget-analysis'] })
-    },
-    onError: () => {
-      throw new Error('Failed to delete transaction')
+      patchCache((old) => old.filter(t => t.id !== deletedId))
+      queryClient.invalidateQueries({ queryKey: ['monthly-budget'] })
     }
   })
 
   return {
     loading: isLoading,
     error,
-    transactions: transactions || [],
+    transactions: data || [],
     addTransaction: addTransactionMutation.mutateAsync,
     addTransactionsBulk: addTransactionsBulkMutation.mutateAsync,
     updateTransaction: updateTransactionMutation.mutateAsync,
+    assignTransactions: assignTransactionsMutation.mutateAsync,
     deleteTransaction: deleteTransactionMutation.mutateAsync
   }
 }

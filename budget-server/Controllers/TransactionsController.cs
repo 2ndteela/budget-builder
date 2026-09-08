@@ -68,7 +68,7 @@ public class TransactionsController : ControllerBase
       .ToListAsync();
   }
 
-  [HttpGet("{id}")]
+  [HttpGet("{id:int}")]
   public async Task<ActionResult<Transaction>> GetTransaction(int id)
   {
     var transaction = await _context.Transactions
@@ -83,6 +83,10 @@ public class TransactionsController : ControllerBase
   [HttpPost]
   public async Task<ActionResult<Transaction>> CreateTransaction(Transaction transaction)
   {
+    // A transaction booked against no plan goes to the month's Unassigned bucket rather
+    // than dangling, so it still carries a category and still lands in the analysis.
+    await BudgetDefaults.AssignCatchAllIfUnmatchedAsync(_context, transaction);
+
     _context.Transactions.Add(transaction);
     await _context.SaveChangesAsync();
 
@@ -151,6 +155,20 @@ public class TransactionsController : ControllerBase
 
     if (allNewTransactions.Count > 0)
     {
+      // An import rarely maps every row to a plan. Resolve each month's Unassigned bucket
+      // once and point the leftovers at it, before the rows are tracked for insert.
+      var unmatched = allNewTransactions.Where(t => t.ProjectedExpenseId == null).ToList();
+
+      foreach (var monthlyBudgetId in unmatched.Select(t => t.MonthlyBudgetId).Distinct())
+      {
+        var catchAll = await BudgetDefaults.GetCatchAllExpenseAsync(_context, monthlyBudgetId);
+
+        foreach (var transaction in unmatched.Where(t => t.MonthlyBudgetId == monthlyBudgetId))
+        {
+          transaction.ProjectedExpenseId = catchAll.Id;
+        }
+      }
+
       _context.Transactions.AddRange(allNewTransactions);
       await _context.SaveChangesAsync();
     }
@@ -165,10 +183,82 @@ public class TransactionsController : ControllerBase
     });
   }
 
-  [HttpPut("{id}")]
+  // Books a whole selection onto one plan. Batched server-side so a hundred rows cost one
+  // request, and so a month's Unassigned bucket is resolved once instead of per row.
+  [HttpPut("assign")]
+  public async Task<ActionResult<IEnumerable<TransactionDTO>>> AssignTransactions(AssignTransactionsDTO request)
+  {
+    var ids = request.TransactionIds.Distinct().ToList();
+
+    if (ids.Count == 0) return BadRequest("At least one transaction is required.");
+
+    var transactions = await _context.Transactions
+      .Where(t => ids.Contains(t.Id))
+      .ToListAsync();
+
+    if (transactions.Count != ids.Count) return NotFound();
+
+    if (request.ProjectedExpenseId == null)
+    {
+      // Each month has its own bucket, so resolve them all before touching a row: resolving
+      // saves, and a half-applied batch would be written out mid-loop.
+      var catchAllIds = new Dictionary<int, int>();
+
+      foreach (var monthlyBudgetId in transactions.Select(t => t.MonthlyBudgetId).Distinct())
+      {
+        var catchAll = await BudgetDefaults.GetCatchAllExpenseAsync(_context, monthlyBudgetId);
+        catchAllIds[monthlyBudgetId] = catchAll.Id;
+      }
+
+      foreach (var transaction in transactions)
+      {
+        transaction.ProjectedExpenseId = catchAllIds[transaction.MonthlyBudgetId];
+      }
+    }
+    else
+    {
+      var expense = await _context.ProjectedExpenses.FindAsync(request.ProjectedExpenseId.Value);
+
+      if (expense == null) return NotFound();
+
+      // A transaction's date is a day inside its own budget's month, so booking it to a plan
+      // from another month would file the spend under the wrong month.
+      if (transactions.Any(t => t.MonthlyBudgetId != expense.MonthlyBudgetId))
+      {
+        return BadRequest("Every transaction must belong to the same month as the projected expense.");
+      }
+
+      foreach (var transaction in transactions)
+      {
+        transaction.ProjectedExpenseId = expense.Id;
+      }
+    }
+
+    await _context.SaveChangesAsync();
+
+    // Clearing the plan spreads the batch across each month's own bucket, so the client is
+    // told what every row actually landed on rather than assuming one id.
+    return transactions.Select(transaction => new TransactionDTO
+    {
+      Id = transaction.Id,
+      BankTransactionId = transaction.BankTransactionId,
+      Amount = transaction.Amount,
+      Title = transaction.Title,
+      Date = transaction.Date,
+      AccountId = transaction.AccountId,
+      MonthlyBudgetId = transaction.MonthlyBudgetId,
+      ProjectedExpenseId = transaction.ProjectedExpenseId
+    }).ToList();
+  }
+
+  [HttpPut("{id:int}")]
   public async Task<IActionResult> UpdateTransaction(int id, Transaction transaction)
   {
     if (id != transaction.Id) return BadRequest();
+
+    // Clearing the plan on an existing transaction sends it back to Unassigned rather than
+    // out of the analysis. Resolved before the entity is attached, since resolving saves.
+    await BudgetDefaults.AssignCatchAllIfUnmatchedAsync(_context, transaction);
 
     _context.Entry(transaction).State = EntityState.Modified;
 
@@ -185,7 +275,7 @@ public class TransactionsController : ControllerBase
     return NoContent();
   }
 
-  [HttpDelete("{id}")]
+  [HttpDelete("{id:int}")]
   public async Task<IActionResult> DeleteTransaction(int id)
   {
     var transaction = await _context.Transactions.FindAsync(id);

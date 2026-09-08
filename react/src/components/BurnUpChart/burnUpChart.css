@@ -1,6 +1,6 @@
 .burnup-chart-container {
   padding: 20px;
-  background: #1a1a1a;
+  background: var(--surface-raised);
   margin-bottom: 30px;
 }
 
@@ -8,5 +8,5 @@
   margin: 0 0 20px 0;
   font-size: 20px;
   font-weight: 600;
-  color: #e5e5e5;
+  color: var(--text-bright);
 }

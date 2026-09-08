@@ -1,3 +1,20 @@
+.editable-field {
+  display: inline-block;
+  min-width: 0;
+}
+
+.editable-field input,
+.editable-field select {
+  width: 100%;
+}
+
+/* A shrink-to-fit inline-block collapses around a 100%-width input, so the
+   wrapper has to fill the cell it sits in. */
+td > .editable-field {
+  display: block;
+  width: 100%;
+}
+
 .editable-date-wrapper {
   position: relative;
   display: inline-block;
@@ -5,9 +22,8 @@
 
 .date-trigger-button {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-  color: #E0E0E0;
+  border: 1px solid var(--field-border);
+  color: var(--text-primary);
   padding: 4px 8px;
   cursor: pointer;
   font-size: 14px;
@@ -16,12 +32,12 @@
 }
 
 .date-trigger-button:hover {
-  border-color: rgba(255, 255, 255, 0.5);
-  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--field-border-focus);
+  background-color: var(--color-gray-transparent);
 }
 
 .date-trigger-button:active {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--color-gray-transparent-hover);
 }
 
 .date-popover {
@@ -29,9 +45,8 @@
   top: calc(100% + 8px);
   left: 0;
   z-index: 1000;
-  background-color: #2a2a2a;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
+  background-color: var(--surface-panel);
+  border: 1px solid var(--field-border);
   padding: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   min-width: 240px;
@@ -43,28 +58,13 @@
   gap: 4px;
 }
 
+/* Widths include the 4px side padding and 1px border now, so they carry that 10px */
 .date-inputs-popover input {
-  width: 40px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #E0E0E0;
+  width: 50px;
   padding: 6px 4px;
-  font-size: 14px;
   text-align: center;
-  border-radius: 4px;
 }
 
 .date-inputs-popover input:last-child {
-  width: 60px;
-}
-
-.date-inputs-popover input::placeholder {
-  color: #888;
-  opacity: 0.7;
-}
-
-.date-inputs-popover input:focus {
-  outline: none;
-  border-color: rgba(255, 255, 255, 0.4);
-  background-color: rgba(255, 255, 255, 0.15);
+  width: 70px;
 }

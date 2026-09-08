@@ -1,5 +1,9 @@
-# Database files
+# Database files (SQLite file, its -wal/-shm sidecars, and manual backups)
+budget-server/db/
 *.db
+*.db-shm
+*.db-wal
+*.db.bak*
 
 # OS files
 .DS_Store

@@ -1,0 +1,30 @@
+.budget-builder h3 {
+  margin: 0;
+}
+
+.new-budget-form {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  padding: 16px;
+  background-color: var(--surface-raised);
+}
+
+.new-budget-fields {
+  display: flex;
+  gap: 8px;
+}
+
+.new-budget-fields select,
+.new-budget-fields input {
+  min-height: 36px;
+}
+
+/* Width goes on the EditableField wrapper — its input is width: 100% */
+.new-budget-fields .editable-field:last-child {
+  width: 88px;
+}
+
+.create-budget-button {
+  min-height: 36px;
+}

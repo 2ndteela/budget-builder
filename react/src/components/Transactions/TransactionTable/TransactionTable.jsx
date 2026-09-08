@@ -1,12 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { MdClose, MdDelete, MdEdit, MdSave } from 'react-icons/md'
 import EditableField from '../../shared/EditableField/EditableField'
 import ProjectedExpenseSelect from '../../shared/ProjectedExpenseSelect/ProjectedExpenseSelect'
 import useAppData from '../../../DataContext/useAppData'
-import { formatTransactionDate } from '../../../utilities/dateFormatting'
+import { formatBudgetMonth, formatTransactionDate } from '../../../utilities/dateFormatting'
 import './transactionTable.css'
 
-function TransactionRow({ transaction }) {
+function TransactionRow({ transaction, isSelected, onToggleSelected }) {
   const {
     categories: { categories },
     accounts: { accounts },
@@ -36,6 +36,14 @@ function TransactionRow({ transaction }) {
 
   return (
     <tr className={`color-${category?.color || 'gray'}`}>
+      <td className='select-cell'>
+        <input
+          type='checkbox'
+          checked={isSelected}
+          onChange={() => onToggleSelected(transaction.id)}
+          aria-label={`Select ${transaction.title}`}
+        />
+      </td>
       <td>
         {isEditing ? (
           <input
@@ -109,8 +117,58 @@ function TransactionRow({ transaction }) {
 export default function TransactionTable({ transactions }) {
   const {
     categories: { categories },
-    projectedExpenses: { projectedExpenses }
+    projectedExpenses: { projectedExpenses },
+    monthlyBudgets: { monthlyBudgets },
+    transactions: { assignTransactions }
   } = useAppData()
+  const [selectedIds, setSelectedIds] = useState([])
+  const [bulkExpenseId, setBulkExpenseId] = useState(null)
+
+  const toggleSelected = useCallback((id) => {
+    setSelectedIds((selected) => selected.includes(id)
+      ? selected.filter((value) => value !== id)
+      : [...selected, id])
+  }, [])
+
+  const selected = useMemo(
+    () => transactions.filter((transaction) => selectedIds.includes(transaction.id)),
+    [selectedIds, transactions])
+
+  // A transaction's date is a day inside its own month, so a plan from another month would
+  // file it under the wrong one. One shared month is what makes a bulk assignment valid.
+  const sharedBudgetId = useMemo(() => {
+    if (selected.length === 0) return null
+    const [first] = selected
+    return selected.every((transaction) => transaction.monthlyBudgetId === first.monthlyBudgetId)
+      ? first.monthlyBudgetId
+      : null
+  }, [selected])
+
+  const sharedBudget = monthlyBudgets.find((budget) => budget.id === sharedBudgetId)
+
+  const budgetExpenses = useMemo(
+    () => projectedExpenses.filter((expense) => expense.monthlyBudgetId === sharedBudgetId),
+    [projectedExpenses, sharedBudgetId])
+
+  const clearSelection = () => {
+    setSelectedIds([])
+    setBulkExpenseId(null)
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === transactions.length) return clearSelection()
+    setSelectedIds(transactions.map((transaction) => transaction.id))
+  }
+
+  const assignSelected = async () => {
+    try {
+      await assignTransactions({ transactionIds: selectedIds, projectedExpenseId: bulkExpenseId })
+      clearSelection()
+    } catch (err) {
+      alert('Error assigning transactions')
+      console.error(err)
+    }
+  }
 
   const total = useMemo(() => {
     const categoryByExpenseId = new Map(projectedExpenses.map((expense) => [
@@ -130,31 +188,71 @@ export default function TransactionTable({ transactions }) {
   })
 
   return (
-    <div className='transactions-table-wrapper'>
-      <table className='transactions-table'>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Transaction</th>
-            <th>Amount</th>
-            <th>Projected Expense</th>
-            <th>Account</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {transactions.map((transaction) => (
-            <TransactionRow key={transaction.id} transaction={transaction} />
-          ))}
-          <tr className='total-row'>
-            <td colSpan='2'><strong>Total</strong></td>
-            <td className={`amount-cell ${total >= 0 ? 'positive-total' : 'negative-total'}`}>
-              <strong>{total >= 0 ? '+' : '-'}${formattedTotal}</strong>
-            </td>
-            <td colSpan='3'></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <>
+      {selectedIds.length > 0 && (
+        <div className='bulk-assign-bar'>
+          <span className='bulk-assign-count'>{selectedIds.length} selected</span>
+          {sharedBudgetId === null ? (
+            <span className='bulk-assign-warning'>
+              Selection spans several months — a projected expense belongs to one month, so pick
+              transactions from a single month to assign them together.
+            </span>
+          ) : (
+            <>
+              <ProjectedExpenseSelect
+                categories={categories}
+                projectedExpenses={budgetExpenses}
+                value={bulkExpenseId}
+                onChange={setBulkExpenseId}
+              />
+              <button className='btn-green' onClick={assignSelected}>
+                Assign {selectedIds.length} to{' '}
+                {sharedBudget ? formatBudgetMonth(sharedBudget) : 'this month'}
+              </button>
+            </>
+          )}
+          <button className='btn-gray' onClick={clearSelection}>Clear</button>
+        </div>
+      )}
+      <div className='transactions-table-wrapper'>
+        <table className='transactions-table'>
+          <thead>
+            <tr>
+              <th className='select-cell'>
+                <input
+                  type='checkbox'
+                  checked={transactions.length > 0 && selectedIds.length === transactions.length}
+                  onChange={toggleSelectAll}
+                  aria-label='Select every transaction shown'
+                />
+              </th>
+              <th>Date</th>
+              <th>Transaction</th>
+              <th>Amount</th>
+              <th>Projected Expense</th>
+              <th>Account</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.map((transaction) => (
+              <TransactionRow
+                key={transaction.id}
+                transaction={transaction}
+                isSelected={selectedIds.includes(transaction.id)}
+                onToggleSelected={toggleSelected}
+              />
+            ))}
+            <tr className='total-row'>
+              <td colSpan='3'><strong>Total</strong></td>
+              <td className={`amount-cell ${total >= 0 ? 'positive-total' : 'negative-total'}`}>
+                <strong>{total >= 0 ? '+' : '-'}${formattedTotal}</strong>
+              </td>
+              <td colSpan='3'></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </>
   )
 }

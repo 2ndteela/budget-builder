@@ -1,49 +1,225 @@
+/* Padding and borders count inside a declared width. Without this, a field styled
+   width: 100% overflows its wrapper by its own padding and border and eats the gap
+   beside it — which is what pushed the category name input into the colour select. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Default button: blue, sharp corners. Override color with .btn-red/.btn-green/.btn-gray */
+button {
+  background-color: var(--color-blue-primary);
+  color: #E0E0E0;
+  border: none;
+  border-radius: 0;
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Shared field chrome: every input/select/textarea in the app starts here so
+   the only per-component CSS left is width and alignment. Sharp corners. */
+input,
+select,
+textarea {
+  background-color: var(--field-bg);
+  border: 1px solid var(--field-border);
+  border-radius: 0;
+  color: var(--text-primary);
+  padding: 8px;
+  font: inherit;
+  font-size: 14px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--field-border-focus);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #888;
+  opacity: 0.7;
+}
+
+input[type="number"] {
+  text-align: right;
+}
+
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  cursor: pointer;
+  accent-color: var(--color-blue-primary);
+}
+
+select {
+  cursor: pointer;
+}
+
+/* Native dropdown lists don't inherit the dark surface, so set it explicitly. */
+option {
+  background-color: var(--surface-panel);
+  color: var(--text-primary);
+}
+
+/* Shared table chrome — sharp corners, left-aligned muted headers. */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  text-align: left;
+}
+
+th {
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+td {
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+/* Semantic amount colors, used by every summary and report surface. */
+.amount-positive {
+  color: var(--color-positive);
+}
+
+.amount-negative {
+  color: var(--color-negative);
+}
+
+.btn-blue {
+  background-color: var(--color-blue-primary);
+}
+
+.btn-red {
+  background-color: var(--color-red-primary);
+}
+
+.btn-green {
+  background-color: var(--color-green-primary);
+}
+
+.btn-yellow {
+  background-color: var(--color-yellow-primary);
+}
+
+.btn-purple {
+  background-color: var(--color-purple-primary);
+}
+
+.btn-pink {
+  background-color: var(--color-pink-primary);
+}
+
+.btn-orange {
+  background-color: var(--color-orange-primary);
+}
+
+.btn-teal {
+  background-color: var(--color-teal-primary);
+}
+
+.btn-gray {
+  background-color: var(--color-gray-primary);
+}
+
 /* Universal color theme classes */
 :root {
-  --color-blue-primary: #1A4D8F;
-  --color-blue-secondary: #1A2A3D;
-  --color-blue-transparent: rgba(26, 77, 143, 0.2);
-  --color-blue-transparent-hover: rgba(26, 77, 143, 0.3);
+  --color-blue-primary: #2563EB;
+  --color-blue-secondary: #16223F;
+  --color-blue-transparent: rgba(37, 99, 235, 0.2);
+  --color-blue-transparent-hover: rgba(37, 99, 235, 0.3);
 
-  --color-red-primary: #8F2C2C;
-  --color-red-secondary: #3D1A1A;
-  --color-red-transparent: rgba(143, 44, 44, 0.2);
-  --color-red-transparent-hover: rgba(143, 44, 44, 0.3);
+  --color-red-primary: #DC2626;
+  --color-red-secondary: #3B1414;
+  --color-red-transparent: rgba(220, 38, 38, 0.2);
+  --color-red-transparent-hover: rgba(220, 38, 38, 0.3);
 
-  --color-green-primary: #2C6E3D;
-  --color-green-secondary: #1A2D20;
-  --color-green-transparent: rgba(44, 110, 61, 0.2);
-  --color-green-transparent-hover: rgba(44, 110, 61, 0.3);
+  --color-green-primary: #16A34A;
+  --color-green-secondary: #102A19;
+  --color-green-transparent: rgba(22, 163, 74, 0.2);
+  --color-green-transparent-hover: rgba(22, 163, 74, 0.3);
 
-  --color-yellow-primary: #8F7A2C;
-  --color-yellow-secondary: #3D351A;
-  --color-yellow-transparent: rgba(143, 122, 44, 0.2);
-  --color-yellow-transparent-hover: rgba(143, 122, 44, 0.3);
+  --color-yellow-primary: #CA8A04;
+  --color-yellow-secondary: #332506;
+  --color-yellow-transparent: rgba(202, 138, 4, 0.2);
+  --color-yellow-transparent-hover: rgba(202, 138, 4, 0.3);
 
-  --color-purple-primary: #5A3D8F;
-  --color-purple-secondary: #2B1A3D;
-  --color-purple-transparent: rgba(90, 61, 143, 0.2);
-  --color-purple-transparent-hover: rgba(90, 61, 143, 0.3);
+  --color-purple-primary: #7C3AED;
+  --color-purple-secondary: #241640;
+  --color-purple-transparent: rgba(124, 58, 237, 0.2);
+  --color-purple-transparent-hover: rgba(124, 58, 237, 0.3);
 
-  --color-pink-primary: #8F3D6E;
-  --color-pink-secondary: #3D1A2D;
-  --color-pink-transparent: rgba(143, 61, 110, 0.2);
-  --color-pink-transparent-hover: rgba(143, 61, 110, 0.3);
+  --color-pink-primary: #DB2777;
+  --color-pink-secondary: #3B0F23;
+  --color-pink-transparent: rgba(219, 39, 119, 0.2);
+  --color-pink-transparent-hover: rgba(219, 39, 119, 0.3);
 
-  --color-orange-primary: #C85A28;
-  --color-orange-secondary: #3D251A;
-  --color-orange-transparent: rgba(200, 90, 40, 0.2);
-  --color-orange-transparent-hover: rgba(200, 90, 40, 0.3);
+  --color-orange-primary: #EA580C;
+  --color-orange-secondary: #3B1A08;
+  --color-orange-transparent: rgba(234, 88, 12, 0.2);
+  --color-orange-transparent-hover: rgba(234, 88, 12, 0.3);
 
-  --color-teal-primary: #2C8F7A;
-  --color-teal-secondary: #1A3D35;
-  --color-teal-transparent: rgba(44, 143, 122, 0.2);
-  --color-teal-transparent-hover: rgba(44, 143, 122, 0.3);
+  --color-teal-primary: #0D9488;
+  --color-teal-secondary: #06302C;
+  --color-teal-transparent: rgba(13, 148, 136, 0.2);
+  --color-teal-transparent-hover: rgba(13, 148, 136, 0.3);
 
   --color-gray-primary: #2C2C2C;
-  --color-gray-secondary: #222;
-  --color-gray-transparent: rgba(44, 44, 44, 0.2);
-  --color-gray-transparent-hover: rgba(44, 44, 44, 0.3);
+  --color-gray-secondary: #1E1E1E;
+  --color-gray-transparent: rgba(255, 255, 255, 0.05);
+  --color-gray-transparent-hover: rgba(255, 255, 255, 0.08);
+
+  /* Semantic amounts — vibrant against the dark surfaces */
+  --color-positive: #22C55E;
+  --color-negative: #EF4444;
+
+  /* Shared surfaces, darkest to lightest */
+  --surface-sunken: #0A0A0A;
+  --surface-page: #121212;
+  --surface-raised: #1E1E1E;
+  --surface-panel: #2C2C2C;
+  --surface-hover: #383838;
+
+  /* Shared field chrome */
+  --field-bg: rgba(255, 255, 255, 0.06);
+  --field-border: rgba(255, 255, 255, 0.18);
+  --field-border-focus: rgba(255, 255, 255, 0.4);
+  --divider: #383838;
+
+  --text-bright: #F5F5F5;
+  --text-primary: #E0E0E0;
+  --text-muted: #999;
+  --text-subtle: #666;
 }
 
 /* Universal background color utility classes */

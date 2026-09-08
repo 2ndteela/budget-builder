@@ -18,7 +18,7 @@ public class TransactionDTO
 
   public Account? Account { get; set; }
 
-  public MonthlyBudgetDTO MonthlyBudget { get; set; }
+  public MonthlyBudgetDTO? MonthlyBudget { get; set; }
 
-  public ProjectedExpenseDTO ProjectedExpense { get; set; }
+  public ProjectedExpenseDTO? ProjectedExpense { get; set; }
 }

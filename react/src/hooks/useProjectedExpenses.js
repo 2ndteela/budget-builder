@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-const baseURL = 'http://localhost:5102/expenses'
+const baseURL = 'http://localhost:5102/projected-expenses'
 
 export default function useProjectedExpenses() {
   const { data: projectedExpenses = [], isLoading, error } = useQuery({

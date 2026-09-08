@@ -41,6 +41,7 @@ public class MonthlyBudgetController : ControllerBase
     var monthlyBudgets = await _context.MonthlyBudgets
       .AsNoTracking()
       .Include(mb => mb.ProjectedExpenses).ThenInclude(pe => pe.Category)
+      .Include(mb => mb.Transactions)
       .Where(mb => mb.Year * 100 + mb.Month >= firstKey && mb.Year * 100 + mb.Month <= lastKey)
       .OrderBy(mb => mb.Year)
       .ThenBy(mb => mb.Month)
@@ -58,19 +59,24 @@ public class MonthlyBudgetController : ControllerBase
           Name = expense.Name,
           Value = expense.Value,
           CategoryId = expense.CategoryId,
-          MonthlyBudgetId = expense.MonthlyBudgetId
+          MonthlyBudgetId = expense.MonthlyBudgetId,
+          IsCatchAll = expense.IsCatchAll,
+          Category = expense.Category == null ? null : ToCategoryDTO(expense.Category)
         }),
-        Categories = mb.ProjectedExpenses
-          .Where(expense => expense.Category != null)
-          .GroupBy(expense => expense.CategoryId)
-          .Select(group => group.First().Category!)
-          .OrderBy(category => category.Name)
-          .Select(category => new CategoryDTO
+        // Every transaction booked to this month, matched or not. Each carries its
+        // ProjectedExpenseId so the client can group them without a second request.
+        Transactions = mb.Transactions
+          .OrderBy(transaction => transaction.Date)
+          .Select(transaction => new TransactionDTO
           {
-            Id = category.Id,
-            Name = category.Name,
-            Color = category.Color,
-            IsIncome = category.IsIncome
+            Id = transaction.Id,
+            BankTransactionId = transaction.BankTransactionId,
+            Amount = transaction.Amount,
+            Title = transaction.Title,
+            Date = transaction.Date,
+            AccountId = transaction.AccountId,
+            MonthlyBudgetId = transaction.MonthlyBudgetId,
+            ProjectedExpenseId = transaction.ProjectedExpenseId
           })
       })
           .ToList();
@@ -144,6 +150,18 @@ public class MonthlyBudgetController : ControllerBase
   private static bool IsValidMonth(int month)
   {
     return month is >= 1 and <= 12;
+  }
+
+  private static CategoryDTO ToCategoryDTO(Category category)
+  {
+    return new CategoryDTO
+    {
+      Id = category.Id,
+      Name = category.Name,
+      Color = category.Color,
+      IsIncome = category.IsIncome,
+      IsSystem = category.IsSystem
+    };
   }
 
   private static DateTime? ParseMonth(string? value)

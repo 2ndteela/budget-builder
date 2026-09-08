@@ -17,7 +17,7 @@ export default function ExpansionPanel({ title, children, defaultExpanded = fals
   }, [isExpanded]);
 
   return (
-    <div className={`expansion-panel expansion-panel-${color}`}>
+    <div className={`expansion-panel color-${color}`}>
       <button
         className="expansion-panel-header"
         onClick={() => setIsExpanded(!isExpanded)}

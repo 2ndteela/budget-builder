@@ -14,6 +14,7 @@ const toggleId = (id) => (selected) =>
 export default function Transactions() {
   const {
     accounts: { accounts, loading: accountsLoading },
+    categories: { categories },
     transactions: { transactions, loading: transactionsLoading, addTransactionsBulk },
     projectedExpenses: { projectedExpenses, loading: projectedExpensesLoading },
     monthlyBudgets: { loading: monthlyBudgetsLoading, monthlyBudgets }
@@ -30,9 +31,36 @@ export default function Transactions() {
 
   const hasFilters = selectedCategoryFilters.length > 0 || selectedAccountFilters.length > 0
 
+  // Every projected expense the range knows about, keyed by id. The budgets are the fresher
+  // source — their cache is patched the moment an expense is added — so they win on conflict.
+  const expensesById = useMemo(() => {
+    const byId = new Map(projectedExpenses.map((expense) => [expense.id, expense]))
+    monthlyBudgets.forEach((budget) => {
+      (budget.projectedExpenses || []).forEach((expense) => byId.set(expense.id, expense))
+    })
+    return byId
+  }, [projectedExpenses, monthlyBudgets])
+
+  // A category reaches the filter bar only by having a projected expense in range. Derived here
+  // rather than read off the budget so a freshly added expense shows up without a refetch.
+  const availableCategories = useMemo(() => {
+    const categoriesById = new Map(categories.map((category) => [category.id, category]))
+    const available = new Map()
+
+    monthlyBudgets.forEach((budget) => {
+      (budget.projectedExpenses || []).forEach((expense) => {
+        const category = expense.category || categoriesById.get(expense.categoryId)
+        if (category) available.set(category.id, category)
+      })
+    })
+
+    return [...available.values()].sort((left, right) => left.name.localeCompare(right.name))
+  }, [monthlyBudgets, categories])
+
   const filteredTransactions = useMemo(() => {
     // A transaction has no category of its own; it inherits one from the projected expense it is matched to.
-    const categoryIdByExpenseId = new Map(projectedExpenses.map((expense) => [expense.id, expense.categoryId]))
+    const categoryIdByExpenseId = new Map(
+      [...expensesById.values()].map((expense) => [expense.id, expense.categoryId]))
 
     return transactions.filter((transaction) => {
       const categoryId = categoryIdByExpenseId.get(transaction.projectedExpenseId)
@@ -40,7 +68,7 @@ export default function Transactions() {
       const matchesAccount = selectedAccountFilters.length === 0 || selectedAccountFilters.includes(transaction.accountId)
       return matchesCategory && matchesAccount
     })
-  }, [projectedExpenses, selectedAccountFilters, selectedCategoryFilters, transactions])
+  }, [expensesById, selectedAccountFilters, selectedCategoryFilters, transactions])
 
   const clearFilters = () => {
     setSelectedCategoryFilters([])
@@ -58,12 +86,6 @@ export default function Transactions() {
   }
 
   if (loading) return <LoadingSpinner />
-
-  const availableCategories = monthlyBudgets.reduce((acc, current) => {
-    const categories = current.categories
-    const uniqueCategories = categories.filter((c) => !acc.some((a) => a.id === c.id))
-    return [...acc, ...uniqueCategories]
-  }, [])
 
   return (
     <>
@@ -102,7 +124,7 @@ export default function Transactions() {
               ))}
             </div>
             {hasFilters && (
-              <button id='clear-filters-button' onClick={clearFilters}>Clear Filters</button>
+              <button id='clear-filters-button' className='btn-gray' onClick={clearFilters}>Clear Filters</button>
             )}
           </div>
           <div id='new-transactions-options'>

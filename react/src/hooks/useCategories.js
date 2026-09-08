@@ -37,9 +37,6 @@ export default function useCategories() {
     },
     onSuccess: (id) => {
       patchCache((old) => old.filter((c) => c.id !== id))
-    },
-    onError: () => {
-      alert('Failed to delete category')
     }
   })
 
@@ -59,9 +56,6 @@ export default function useCategories() {
     },
     onSuccess: (created) => {
       patchCache((old) => [...old, created])
-    },
-    onError: () => {
-      alert('Failed to add category')
     }
   })
 
@@ -80,9 +74,6 @@ export default function useCategories() {
     },
     onSuccess: (updated) => {
       patchCache((old) => old.map((c) => (c.id === updated.id ? updated : c)))
-    },
-    onError: () => {
-      alert('Failed to update category')
     }
   })
 
@@ -90,8 +81,8 @@ export default function useCategories() {
     loading: isLoading,
     error,
     categories: categories || [],
-    deleteCategory: deleteCategoryMutation.mutate,
-    addNewCategory: addCategoryMutation.mutate,
-    updateCategory: updateCategoryMutation.mutate
+    deleteCategory: deleteCategoryMutation.mutateAsync,
+    addNewCategory: addCategoryMutation.mutateAsync,
+    updateCategory: updateCategoryMutation.mutateAsync
   }
 }

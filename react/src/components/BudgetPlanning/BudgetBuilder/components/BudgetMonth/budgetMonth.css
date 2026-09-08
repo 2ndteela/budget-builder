@@ -1,0 +1,50 @@
+.budget-month {
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.budget-month h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.budget-summary-panel {
+  width: 30%;
+  min-width: 200px;
+  background-color: var(--surface-panel);
+  padding: 16px;
+}
+
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.summary-total {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--divider);
+  font-weight: 600;
+}
+
+.budget-expenses-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+.budget-expenses-header {
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+}
+
+.budget-expenses-header h4 {
+  margin: 0;
+}

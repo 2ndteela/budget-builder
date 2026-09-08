@@ -3,6 +3,8 @@ import useAppData from '../../../DataContext/useAppData'
 import ProjectedExpenseSelect from '../../shared/ProjectedExpenseSelect/ProjectedExpenseSelect'
 import { formatBudgetMonth } from '../../../utilities/dateFormatting'
 import './createNewTransaction.css'
+import CompressedButton from '../../shared/CompressedButton/CompressedButton'
+import { MdAdd } from 'react-icons/md'
 
 const createDefaultTransaction = (accounts, monthlyBudgets) => {
   const now = new Date()
@@ -57,7 +59,7 @@ export default function CreateNewTransaction() {
 
   return (
     <div className='new-transaction-wrapper'>
-      <button id='new-transaction-button' onClick={() => setIsOpen(!isOpen)}>Add Transaction</button>
+      <CompressedButton Icon={MdAdd} id='new-transaction-button' onClick={() => setIsOpen(!isOpen)}>Add Transaction</CompressedButton>
       {isOpen && (
         <div className='new-transaction-menu'>
           <input
@@ -115,7 +117,7 @@ export default function CreateNewTransaction() {
           </select>
           <div className='new-transaction-buttons'>
             <button onClick={create}>Create</button>
-            <button onClick={close}>Cancel</button>
+            <button className='btn-gray' onClick={close}>Cancel</button>
           </div>
         </div>
       )}

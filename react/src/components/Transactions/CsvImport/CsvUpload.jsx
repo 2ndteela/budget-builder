@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { MdUploadFile } from 'react-icons/md'
 import useAppData from '../../../DataContext/useAppData'
 import './csvImport.css'
+import CompressedButton from '../../shared/CompressedButton/CompressedButton'
 
 const MAPPED_COLUMNS = ['date', 'title', 'amount', 'bankTransactionId']
 const REQUIRED_COLUMNS = ['date', 'title', 'amount']
@@ -118,10 +119,9 @@ export default function CsvUpload({ onImport }) {
 
   return (
     <>
-      <button id='upload-csv-button' onClick={() => fileInputRef.current?.click()}>
-        <MdUploadFile />
+      <CompressedButton id='upload-csv-button' color="green" onClick={() => fileInputRef.current?.click()} Icon={MdUploadFile}>
         Upload CSV
-      </button>
+      </CompressedButton>
       <input
         ref={fileInputRef}
         type='file'

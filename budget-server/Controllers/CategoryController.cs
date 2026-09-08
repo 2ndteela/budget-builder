@@ -67,6 +67,9 @@ public class CategoryController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Category>> CreateCategory(Category category)
     {
+        // Only BudgetDefaults mints the reserved category
+        category.IsSystem = false;
+
         _context.Categories.Add(category);
         await _context.SaveChangesAsync();
 
@@ -78,7 +81,22 @@ public class CategoryController : ControllerBase
     {
         if (id != category.Id) return BadRequest();
 
-        _context.Entry(category).State = EntityState.Modified;
+        var existing = await _context.Categories.FindAsync(id);
+        if (existing == null) return NotFound();
+
+        if (existing.IsSystem)
+        {
+            // Recolouring Unassigned is harmless; renaming it, archiving it or flipping
+            // it to income would change what every fallback means, so those stick.
+            existing.Color = category.Color;
+        }
+        else
+        {
+            existing.Name = category.Name;
+            existing.Color = category.Color;
+            existing.IsIncome = category.IsIncome;
+            existing.Archived = category.Archived;
+        }
 
         try
         {
@@ -99,13 +117,23 @@ public class CategoryController : ControllerBase
         var category = await _context.Categories.FindAsync(id);
         if (category == null) return NotFound();
 
-        List<ProjectedExpense> projectedCostsToRemove = _context.ProjectedExpenses
-        .Where(ex => ex.CategoryId == category.Id)
-        .ToList();
+        if (category.IsSystem)
+        {
+            return BadRequest($"The {BudgetDefaults.UnassignedName} category cannot be deleted.");
+        }
 
-        // Transactions keep their monthly budget; the FK to the projected expense is
-        // set to null by the delete behaviour, leaving them unmatched.
-        _context.ProjectedExpenses.RemoveRange(projectedCostsToRemove);
+        // Re-home the plans instead of deleting them, so the transactions booked against
+        // them keep a category and stay in the analysis.
+        var unassignedId = (await BudgetDefaults.GetUnassignedCategoryAsync(_context)).Id;
+        var affectedExpenses = await _context.ProjectedExpenses
+            .Where(ex => ex.CategoryId == category.Id)
+            .ToListAsync();
+
+        foreach (var expense in affectedExpenses)
+        {
+            expense.CategoryId = unassignedId;
+        }
+
         _context.Categories.Remove(category);
         await _context.SaveChangesAsync();
 
