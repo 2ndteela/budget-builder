@@ -10,6 +10,11 @@
   background: var(--surface-raised);
 }
 
+.summary-items-row {
+  display: flex;
+  flex-direction: row;
+}
+
 .summary-item {
   display: flex;
   flex-direction: column;

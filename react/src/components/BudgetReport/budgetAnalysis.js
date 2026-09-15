@@ -230,11 +230,22 @@ export default function buildBudgetAnalysis(monthlyBudgets = [], allCategories =
     .filter((category) => !category.isIncome)
     .reduce((total, category) => total + category.projectedTotal, 0))
 
+
+  const projectedTotalIncome =
+    monthlyBudgets.reduce((total, budget) => {
+      const subTotal = budget.projectedExpenses.reduce((monthTotal, pe) => {
+        return pe?.category.isIncome ? monthTotal + pe.value : monthTotal
+      }, 0)
+      console.log(subTotal)
+      return subTotal + total
+    }, 0)
+
   return {
     categories,
     totalIncome,
     totalExpense,
     projectedExpense,
+    projectedTotalIncome,
     burnUpPoints: buildBurnUpPoints(budgets, expenseEntries, resolveCategory)
   }
 }

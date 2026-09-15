@@ -27,6 +27,8 @@ export default function BudgetReport() {
   const [expandedGroups, setExpandedGroups] = useState(new Set())
   const [sortCondition, setSortCondition] = useState('name')
 
+
+
   const analysis = useMemo(
     () => buildBudgetAnalysis(monthlyBudgets, categories),
     [monthlyBudgets, categories])
@@ -66,11 +68,9 @@ export default function BudgetReport() {
 
     const sorted = [...categories]
 
-    if (sortCondition.includes('name')) {
-      sorted.sort((a, b) => a.name.localeCompare(b.name))
-    } else if (sortCondition.includes('value')) {
-      sorted.sort((a, b) => a.transactionTotal - b.transactionTotal)
-    } else if (sortCondition.includes('difference')) {
+    if (sortCondition.includes('name')) sorted.sort((a, b) => a.name.localeCompare(b.name))
+    else if (sortCondition.includes('value')) sorted.sort((a, b) => a.transactionTotal - b.transactionTotal)
+    else if (sortCondition.includes('difference')) {
       sorted.sort((a, b) => {
         const diffA = a.isIncome ? a.transactionTotal - a.projectedTotal : a.projectedTotal - a.transactionTotal
         const diffB = b.isIncome ? b.transactionTotal - b.projectedTotal : b.projectedTotal - b.transactionTotal
@@ -94,27 +94,42 @@ export default function BudgetReport() {
     )
   }
 
+
+  const projectedBalance = analysis.projectedTotalIncome - analysis.projectedExpense
+
   return (
     <div className="budget-report">
       <div className="budget-summary">
-        <div className="summary-item">
-          <span>Total Income:</span>
-          <span className="income">{formatCurrency(analysis.totalIncome)}</span>
-        </div>
-        <div className="summary-item">
-          <span>Projected Expenses:</span>
-          <span className="projection">{formatCurrency(analysis.projectedExpense)}</span>
-        </div>
-        <div className="summary-item">
-          <span>Total Expense:</span>
-          <span className="expense">{formatCurrency(analysis.totalExpense)}</span>
-        </div>
-        <div className="summary-item">
-          <span>Net Balance:</span>
-          <span className={netBalance >= 0 ? 'income' : 'expense'}>
-            {formatCurrency(netBalance)}
-          </span>
-        </div>
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Projected</th>
+              <th>Actual</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Income</td>
+              <td>{formatCurrency(analysis.projectedTotalIncome)}</td>
+              <td>{formatCurrency(analysis.totalIncome)}</td>
+            </tr>
+            <tr>
+              <td>Expense</td>
+              <td>{formatCurrency(analysis.projectedExpense)}</td>
+              <td>{formatCurrency(analysis.totalExpense)}</td>
+            </tr>
+            <tr>
+              <td>Balance</td>
+              <td className={getTotalClass(projectedBalance)}>
+                {formatCurrency(projectedBalance)}
+              </td>
+              <td className={getTotalClass(netBalance)}>
+                {formatCurrency(netBalance)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <BurnUpChart dataPoints={analysis.burnUpPoints} />

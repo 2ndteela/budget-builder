@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("budget-server")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+03bc57159577c6bf1e0450bcdb350462fef31cff")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5ed9f1db3704c4e903a17b03fc18872483abe590")]
 [assembly: System.Reflection.AssemblyProductAttribute("budget-server")]
 [assembly: System.Reflection.AssemblyTitleAttribute("budget-server")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
