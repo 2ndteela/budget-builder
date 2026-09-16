@@ -28,3 +28,46 @@
 .create-budget-button {
   min-height: 36px;
 }
+
+.budget-table-header {
+  display: flex;
+  padding: 12px 24px;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--divider);
+}
+
+.budget-row-summary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.budget-month-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.budget-value-col {
+  width: 140px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.budget-value-col.positive {
+  color: var(--color-positive);
+  font-weight: 600;
+}
+
+.budget-value-col.negative {
+  color: var(--color-negative);
+  font-weight: 600;
+}
+
+.budget-builder .expansion-panel-body {
+  padding-left: 40px;
+}

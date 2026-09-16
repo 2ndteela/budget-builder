@@ -1,50 +1,62 @@
 /* Color comes from the .color-<hue> utility in index.css, which sets --bg-*.
    Fallbacks keep the panel readable when no color class is applied. */
-.expansion-panel {
+
+:root {
+  interpolate-size: allow-keywords;
+}
+
+details::details-content {
+  height: 0;
+  overflow: hidden;
+  transition: content-visibility 0.3s ease, height 0.3s ease;
+  content-visibility: hidden;
+  padding-top: 0px;
+}
+
+details[open]::details-content {
+  height: auto;
+  content-visibility: visible;
+  padding-top: 16px;
+}
+
+details {
   background-color: var(--bg-secondary, var(--color-gray-secondary));
   margin-bottom: 8px;
   width: 100%;
+  transition: .5s;
 }
 
-.expansion-panel-header {
+details summary {
   width: 100%;
   background-color: var(--bg-primary, var(--color-gray-primary));
   border: none;
   color: var(--text-bright);
   padding: 16px 24px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   cursor: pointer;
   transition: filter 0.2s;
+  list-style: none;
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+details summary::before {
+  content: '▶';
+  margin-right: 12px;
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+details[open] summary::before {
+  transform: rotate(90deg);
 }
 
 /* opacity: 1 cancels the global button:hover fade — headers brighten instead */
-.expansion-panel-header:hover {
+details summary:hover {
   filter: brightness(1.2);
   opacity: 1;
-}
-
-.expansion-panel-title {
-  font-size: 16px;
-  font-weight: 500;
-  text-align: left;
-}
-
-.expansion-panel-icon {
-  transition: transform 0.3s ease;
-  font-size: 12px;
-}
-
-.expansion-panel-icon.expanded {
-  transform: rotate(180deg);
-}
-
-.expansion-panel-content {
-  overflow: hidden;
-  transition: height 0.3s ease;
-}
-
-.expansion-panel-body {
-  padding: 16px 24px;
 }

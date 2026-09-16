@@ -5,6 +5,8 @@ import SuggestedExpenses from '../SuggestedExpenses/SuggestedExpenses'
 import './projectedExpenses.css'
 import useAppData from '../../../../../DataContext/useAppData'
 import EditableField from '../../../../shared/EditableField/EditableField'
+import { BiCaretDown } from 'react-icons/bi'
+import React from 'react'
 
 const CURRENCY_FORMAT = { style: 'currency', currency: 'USD' }
 
@@ -72,16 +74,6 @@ function ProjectedExpenseRow({ expense, categories, onUpdate, onRemove, handleCh
           formatOptions={CURRENCY_FORMAT}
         />
       </td>
-      <td>
-        <EditableField
-          type='select'
-          value={isEditing ? editedExpense.categoryId : expense.categoryId}
-          setValue={(categoryId) => setEditedExpense({ ...editedExpense, categoryId: Number(categoryId) })}
-          editMode={isEditing}
-          options={categories.map((item) => ({ value: item.id, label: item.name }))}
-          displayValue={category?.name || '—'}
-        />
-      </td>
       {/* The Unassigned bucket is maintained by the server — transactions land in it on
           their own, and the server rejects edits to it, so it gets no row actions. */}
       <td className='actions-cell'>
@@ -130,6 +122,65 @@ export default function ProjectedExpenses({ monthlyBudgetId }) {
   const expenses = useMemo(() => {
     return budget?.projectedExpenses || []
   }, [budget?.projectedExpenses])
+
+  const categoriesWithExpenses = useMemo(() => {
+    if (!expenses || expenses?.length < 1) return []
+    return expenses.reduce((acc, expense) => {
+      const categoryIndex = acc.findIndex((category) => category.id === expense.categoryId)
+      if (categoryIndex > -1) {
+        const current = acc[categoryIndex]
+        acc[categoryIndex] = {
+          ...current,
+          expenses: [...current.expenses, expense]
+        }
+
+        return acc
+      }
+      else return [...acc, {
+        id: expense.categoryId,
+        name: expense.category.name,
+        expenses: [expense],
+        isIncome: expense.category.isIncome
+      }]
+    }, [])
+  }, [expenses])
+
+  const [expandedCategories, setExpandedCategories] = useState(new Set())
+  const [sortField, setSortField] = useState('name') // 'name' or 'total'
+  const [sortDirection, setSortDirection] = useState('asc') // 'asc' or 'desc'
+
+  const toggleCategory = (categoryId) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev)
+      if (next.has(categoryId)) next.delete(categoryId)
+      else next.add(categoryId)
+      return next
+    })
+  }
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  const sortedCategories = useMemo(() => {
+    const sorted = [...categoriesWithExpenses].sort((a, b) => {
+      if (sortField === 'name') {
+        return sortDirection === 'asc'
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name)
+      } else {
+        const totalA = a.expenses.reduce((sum, exp) => sum + exp.value, 0)
+        const totalB = b.expenses.reduce((sum, exp) => sum + exp.value, 0)
+        return sortDirection === 'asc' ? totalA - totalB : totalB - totalA
+      }
+    })
+    return sorted
+  }, [categoriesWithExpenses, sortField, sortDirection])
 
   const handleNewExpenseChange = (field, value) => setNewExpense((v) => ({ ...v, [field]: value }))
 
@@ -305,72 +356,102 @@ export default function ProjectedExpenses({ monthlyBudgetId }) {
           <thead>
             <tr>
               <th className='select-cell'></th>
-              <th style={{ textAlign: 'left' }} >Name</th>
-              <th>Amount</th>
-              <th>Category</th>
+              <th className='sortable-header' onClick={() => handleSort('name')} style={{ textAlign: 'left' }}>
+                Name {sortField === 'name' && (
+                  <BiCaretDown style={{
+                    transform: sortDirection === 'desc' ? 'rotate(180deg)' : 'none',
+                    display: 'inline-block',
+                    marginLeft: '4px'
+                  }} />
+                )}
+              </th>
+              <th className='sortable-header' onClick={() => handleSort('total')}>
+                Total {sortField === 'total' && (
+                  <BiCaretDown style={{
+                    transform: sortDirection === 'desc' ? 'rotate(180deg)' : 'none',
+                    display: 'inline-block',
+                    marginLeft: '4px'
+                  }} />
+                )}
+              </th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             {expenses.length === 0 && !showNewExpense && (
               <tr className='empty-budget-row'>
-                <td colSpan='5'>No projected expenses yet</td>
+                <td colSpan='4'>No projected expenses yet</td>
               </tr>
             )}
-            {expenses.map((pe) => (
-              <ProjectedExpenseRow
-                key={pe.id}
-                expense={pe}
-                categories={categories}
-                onUpdate={updateProjectedExpense}
-                onRemove={deleteProjectedExpense}
-                handleChecked={handleCheck}
-                isChecked={checkedFields.includes(pe.id)}
-                disabled={showNewExpense}
-              />
-            ))}
-            {(showNewExpense || isCombining) && (
-              <tr className='new-expense-row'>
-                <td className='select-cell' />
-                <td>
-                  <input
-                    type='text'
-                    placeholder={isCombining ? `Combined name for ${checkedFields.length} expenses` : 'New expense'}
-                    value={newExpense.name || ''}
-                    onChange={({ target }) => handleNewExpenseChange('name', target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && submitRow()}
-                  />
-                </td>
-                <td>
-                  <input
-                    type='number'
-                    placeholder='0'
-                    value={newExpense.value ?? ''}
-                    onChange={({ target }) => handleNewExpenseChange('value', target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && submitRow()}
-                  />
-                </td>
-                <td>
-                  <select
-                    value={newExpense.categoryId || 0}
-                    onChange={({ target }) => handleNewExpenseChange('categoryId', target.value)}
+            {sortedCategories.map((categoryGroup) => {
+              const isExpanded = expandedCategories.has(categoryGroup.id)
+              const categoryTotal = categoryGroup.expenses.reduce((sum, exp) => sum + exp.value, 0)
+              const category = categories.find(c => c.id === categoryGroup.id)
+
+              return (
+                <React.Fragment key={categoryGroup.id}>
+                  <tr
+                    className={`category-header-row color-${category?.color || 'gray'}`}
+                    onClick={() => toggleCategory(categoryGroup.id)}
                   >
-                    <option value={0}>Unassigned</option>
-                    {categories.filter((c) => !c.isSystem).map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <button className='add-expense-button btn-green' onClick={submitRow}>
-                    {isCombining ? 'Combine' : 'Add'}
-                  </button>
-                </td>
-              </tr>
-            )}
+                    <td className='expand-icon'>
+                      <BiCaretDown style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s' }} />
+                    </td>
+                    <td style={{ textAlign: 'left', fontWeight: 600 }}>{categoryGroup.name}</td>
+                    <td style={{ fontWeight: 600, color: categoryGroup.isIncome ? 'var(--color-positive)' : null }}>
+                      {new Intl.NumberFormat('en-US', CURRENCY_FORMAT).format(categoryTotal)}
+                    </td>
+                    <td></td>
+                  </tr>
+                  {isExpanded && categoryGroup.expenses.map((pe) => (
+                    <ProjectedExpenseRow
+                      key={pe.id}
+                      expense={pe}
+                      categories={categories}
+                      onUpdate={updateProjectedExpense}
+                      onRemove={deleteProjectedExpense}
+                      handleChecked={handleCheck}
+                      isChecked={checkedFields.includes(pe.id)}
+                      disabled={showNewExpense}
+                    />
+                  ))}
+                </React.Fragment>
+              )
+            })}
           </tbody>
         </table>
       </div>
+      {(showNewExpense || isCombining) && (
+        <div className='new-expense-form'>
+          <input
+            type='text'
+            placeholder={isCombining ? `Combined name for ${checkedFields.length} expenses` : 'New expense'}
+            value={newExpense.name || ''}
+            onChange={({ target }) => handleNewExpenseChange('name', target.value)}
+            className='new-expense-name'
+          />
+          <input
+            type='number'
+            placeholder='0'
+            value={newExpense.value ?? ''}
+            onChange={({ target }) => handleNewExpenseChange('value', target.value)}
+            className='new-expense-value'
+          />
+          <select
+            value={newExpense.categoryId || 0}
+            onChange={({ target }) => handleNewExpenseChange('categoryId', target.value)}
+            className='new-expense-category'
+          >
+            <option value={0}>Unassigned</option>
+            {categories.filter((c) => !c.isSystem).map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+          <button className='add-expense-button btn-green' onClick={submitRow}>
+            {isCombining ? 'Combine' : 'Add'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

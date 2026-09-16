@@ -4,7 +4,7 @@ import useAppData from '../../DataContext/useAppData'
 import BurnUpChart from '../BurnUpChart/BurnUpChart'
 import buildBudgetAnalysis from './budgetAnalysis'
 import './budgetReport.css'
-import { BiCaretDown } from "react-icons/bi";
+import { BiCaretDown, BiCaretUp } from "react-icons/bi";
 
 const formatCurrency = (amount) => new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -100,36 +100,39 @@ export default function BudgetReport() {
   return (
     <div className="budget-report">
       <div className="budget-summary">
-        <table>
-          <thead>
-            <tr>
-              <th></th>
-              <th>Projected</th>
-              <th>Actual</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Income</td>
-              <td>{formatCurrency(analysis.projectedTotalIncome)}</td>
-              <td>{formatCurrency(analysis.totalIncome)}</td>
-            </tr>
-            <tr>
-              <td>Expense</td>
-              <td>{formatCurrency(analysis.projectedExpense)}</td>
-              <td>{formatCurrency(analysis.totalExpense)}</td>
-            </tr>
-            <tr>
-              <td>Balance</td>
-              <td className={getTotalClass(projectedBalance)}>
-                {formatCurrency(projectedBalance)}
-              </td>
-              <td className={getTotalClass(netBalance)}>
-                {formatCurrency(netBalance)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div style={{ width: '100%' }}>
+          <h2>Net Balance Summary</h2>
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>Projected</th>
+                <th>Actual</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Income</td>
+                <td>{formatCurrency(analysis.projectedTotalIncome)}</td>
+                <td>{formatCurrency(analysis.totalIncome)}</td>
+              </tr>
+              <tr>
+                <td>Expense</td>
+                <td>{formatCurrency(analysis.projectedExpense)}</td>
+                <td>{formatCurrency(analysis.totalExpense)}</td>
+              </tr>
+              <tr>
+                <td>Balance</td>
+                <td className={getTotalClass(projectedBalance)}>
+                  {formatCurrency(projectedBalance)}
+                </td>
+                <td className={getTotalClass(netBalance)}>
+                  {formatCurrency(netBalance)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <BurnUpChart dataPoints={analysis.burnUpPoints} />
@@ -164,7 +167,7 @@ export default function BudgetReport() {
                   onClick={() => toggleRow(category.id)}
                 >
                   <td className="expand-icon">
-                    {isExpanded ? '▼' : '▶'}
+                    {isExpanded ? <BiCaretDown /> : <BiCaretUp />}
                   </td>
                   <td>
                     {category.name}

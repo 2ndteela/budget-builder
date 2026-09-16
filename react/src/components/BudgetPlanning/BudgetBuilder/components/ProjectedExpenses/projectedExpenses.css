@@ -1,29 +1,41 @@
 .projected-expenses table {
   background-color: var(--surface-raised);
+  table-layout: fixed;
+  width: 100%;
 }
 
 .projected-expenses thead {
   background-color: var(--surface-sunken);
 }
 
+.projected-expenses .sortable-header {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+
+.projected-expenses .sortable-header:hover {
+  background: var(--surface-raised);
+}
+
 .projected-expenses td {
   padding: 4px 12px;
+}
+
+.projected-expenses th:nth-child(2),
+.projected-expenses td:nth-child(2) {
+  width: auto;
 }
 
 .projected-expenses th:nth-child(3),
 .projected-expenses td:nth-child(3) {
   text-align: right;
-  width: 20%;
+  width: 180px;
 }
 
 .projected-expenses th:nth-child(4),
 .projected-expenses td:nth-child(4) {
-  width: 25%;
-}
-
-.projected-expenses th:last-child,
-.projected-expenses td:last-child {
-  width: 48px;
+  width: 80px;
   text-align: center;
 }
 
@@ -57,10 +69,16 @@
 .projected-expense-table-row {
   border-left: 3px solid var(--bg-primary, var(--color-gray-primary));
   transition: background-color 0.3s;
+  background: var(--surface-raised);
 }
 
 .projected-expense-table-row:hover {
   background: linear-gradient(90deg, var(--bg-transparent-hover, var(--color-gray-transparent-hover)) 0%, rgba(255, 255, 255, 0.01) 100%);
+}
+
+
+.projected-expense-table-row td:nth-child(2) {
+  padding-left: 0px;
 }
 
 .projected-expenses input,
@@ -70,7 +88,7 @@
 
 /* The combine column. A checkbox keeps its own size — the 100% above would distort it. */
 .projected-expenses .select-cell {
-  width: 32px;
+  width: 40px;
   text-align: center;
 }
 
@@ -99,4 +117,60 @@
 .projected-expenses .total-row td {
   border-top: 1px solid var(--divider);
   padding-top: 12px;
+}
+
+.category-header-row {
+  cursor: pointer;
+  border-left: 4px solid var(--bg-primary, var(--color-gray-primary));
+  background: var(--surface-panel);
+  transition: all 0.2s ease;
+}
+
+.category-header-row:hover {
+  background: var(--surface-raised);
+}
+
+.category-header-row .expand-icon {
+  text-align: center;
+  color: var(--text-subtle);
+  font-size: 12px;
+  padding: 4px;
+}
+
+.new-expense-form {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface-raised);
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+  padding-inline-start: 0;
+}
+
+.new-expense-name {
+  flex: 1 1 auto;
+  width: 58%;
+}
+
+.new-expense-value {
+  flex-shrink: 0;
+  width: 10%;
+}
+
+.new-expense-category {
+  flex-shrink: 0;
+  width: 25%;
+}
+
+.new-expense-form input,
+.new-expense-form select {
+  padding: 8px 12px;
+  background: var(--surface-panel);
+  border: 1px solid var(--divider);
+  color: var(--text-bright);
+}
+
+.new-expense-form button {
+  white-space: nowrap;
 }

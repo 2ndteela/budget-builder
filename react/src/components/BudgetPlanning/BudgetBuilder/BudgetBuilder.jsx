@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import ExpansionPanel from '../../shared/ExpansionPanel/ExpansionPanel'
 import './budgetBuilder.css'
 import useAppData from '../../../DataContext/useAppData'
 import LoadingSpinner from '../../shared/LoadingSpinner/LoadingSpinner'
 import BudgetMonth from './components/BudgetMonth/BudgetMonth'
 import EditableField from '../../shared/EditableField/EditableField'
+import formatCurrency from '../../../utilities/formateCurrency'
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -20,13 +21,26 @@ function parseBudgetMonth(startDate) {
     : { year: now.getFullYear(), month: now.getMonth() + 1 }
 }
 
-
-
 export default function BudgetBuilder() {
   const {
     monthlyBudgets: { loading, monthlyBudgets, createNewMonthlyBudget },
-    dateRange: { startDate }
+    dateRange: { startDate },
+    categories: categoryData
   } = useAppData()
+
+  const getExpenseSummary = useCallback((b) => {
+    const { categories } = categoryData
+    const { projectedExpenses } = b
+    const categoryById = new Map(categories.map((category) => [category.id, category]))
+
+    return projectedExpenses.reduce((totals, expense) => {
+      const category = categoryById.get(expense.categoryId)
+      if (category?.isIncome) totals.projectedIncome += expense.value
+      else totals.projectedExpensesTotal += expense.value
+      return totals
+    }, { projectedIncome: 0, projectedExpensesTotal: 0 })
+  }, [categoryData])
+
   const initialBudgetMonth = parseBudgetMonth(startDate)
   const [newBudgetMonth, setNewBudgetMonth] = useState(initialBudgetMonth.month)
   const [newBudgetYear, setNewBudgetYear] = useState(initialBudgetMonth.year)
@@ -46,11 +60,29 @@ export default function BudgetBuilder() {
       {loading ? <LoadingSpinner /> : (
 
         <div style={{ paddingTop: '16px' }}>
+          {monthlyBudgets.length > 0 && (
+            <div className="budget-table-header">
+              <div className="budget-month-col">Month</div>
+              <div className="budget-value-col">Income</div>
+              <div className="budget-value-col">Expense</div>
+              <div className="budget-value-col">Balance</div>
+            </div>
+          )}
           {monthlyBudgets.map((budget, idx) => {
+            const summary = getExpenseSummary(budget)
+            const balance = summary.projectedIncome - summary.projectedExpensesTotal
+            const balanceClass = balance === 0 ? '' : balance > 0 ? 'positive' : 'negative'
             return (
               <ExpansionPanel
                 key={budget.id}
-                title={`${MONTH_NAMES[budget.month - 1]} ${budget.year}`}
+                title={(
+                  <div className="budget-row-summary">
+                    <div className="budget-month-col">{`${MONTH_NAMES[budget.month - 1]} ${budget.year}`}</div>
+                    <div className="budget-value-col">{formatCurrency(summary.projectedIncome)}</div>
+                    <div className="budget-value-col">{formatCurrency(summary.projectedExpensesTotal)}</div>
+                    <div className={`budget-value-col ${balanceClass}`}>{formatCurrency(balance)}</div>
+                  </div>
+                )}
                 defaultExpanded={idx === 0}
               >
                 <BudgetMonth monthlyBudgetId={budget.id} />

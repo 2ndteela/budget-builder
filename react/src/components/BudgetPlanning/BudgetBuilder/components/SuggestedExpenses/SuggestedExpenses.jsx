@@ -80,7 +80,7 @@ export default function SuggestedExpenses({ suggestions = [], onAdd, onDismiss, 
           )}
           <CompressedButton
             color='gray'
-            Icon={MdRemove}
+            Icon={hideSuggestions ? MdAdd : MdRemove}
             onClick={() => setHideSuggestions((hidden) => !hidden)}
           >
             {hideSuggestions ? 'Show Suggestions' : 'Hide Suggestions'}
