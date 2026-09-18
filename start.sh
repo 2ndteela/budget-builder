@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Start backend
-cd budget-server
+cd server
 dotnet run --urls=http://localhost:5102 &
 BACKEND_PID=$!
 
 # Start frontend
-cd ../react
+cd ../client
 npm run dev &
 FRONTEND_PID=$!
 

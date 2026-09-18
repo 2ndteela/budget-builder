@@ -1,0 +1,170 @@
+.transactions-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.transactions-table {
+  background-color: var(--surface-raised);
+  table-layout: fixed;
+  width: 100%;
+}
+
+.transactions-table thead {
+  background: var(--surface-sunken);
+}
+
+.transactions-table th {
+  padding: 12px 16px;
+  text-align: left;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.transactions-table td {
+  padding: 12px 16px;
+  border-top: 1px solid var(--divider);
+}
+
+.transactions-table tbody tr:not([class*="color-"]):hover {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+}
+
+.amount-cell,
+.transactions-table th:nth-child(4),
+.transactions-table td:nth-child(4) {
+  text-align: right;
+}
+
+
+/* The bulk-assign column. A checkbox keeps its own size, unlike the row's text fields. */
+.transactions-table .select-cell {
+  width: 40px;
+  padding-right: 0;
+  text-align: center;
+}
+
+/* Date column */
+.transactions-table th:nth-child(2),
+.transactions-table td:nth-child(2) {
+  width: 120px;
+}
+
+/* Transaction column */
+.transactions-table th:nth-child(3),
+.transactions-table td:nth-child(3) {
+  width: 280px;
+}
+
+/* Amount column */
+.transactions-table th:nth-child(4),
+.transactions-table td:nth-child(4) {
+  width: 100px;
+}
+
+/* Projected Expense column */
+.transactions-table th:nth-child(5),
+.transactions-table td:nth-child(5) {
+  width: 180px;
+}
+
+/* Account column */
+.transactions-table th:nth-child(6),
+.transactions-table td:nth-child(6) {
+  width: 140px;
+}
+
+/* Actions column */
+.transactions-table th:nth-child(7),
+.transactions-table td:nth-child(7) {
+  width: 90px;
+}
+
+.transactions-table input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--bg-primary, var(--color-blue-primary));
+}
+
+/* Follows the page down, so a selection made far below the header stays actionable */
+.bulk-assign-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--surface-sunken);
+  border-left: 3px solid var(--color-blue-primary);
+}
+
+.bulk-assign-count {
+  color: var(--text-bright);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.bulk-assign-bar select {
+  min-width: 220px;
+  padding: 6px 8px;
+}
+
+.bulk-assign-warning {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.transactions-table .total-row td {
+  padding-top: 16px;
+  background-color: var(--surface-raised);
+}
+
+.positive-total {
+  color: var(--color-positive);
+}
+
+.negative-total {
+  color: var(--color-negative);
+}
+
+/* Category row highlights - uses universal color classes */
+.transactions-table tbody tr[class*="color-"] {
+  border-left: 3px solid var(--bg-primary);
+  transition: background-color 0.3s;
+}
+
+.transactions-table tbody tr[class*="color-"]:hover {
+  background: linear-gradient(90deg, var(--bg-transparent-hover) 0%, rgba(255, 255, 255, 0.01) 100%);
+}
+
+.transactions-table tbody tr td input[type="text"],
+.transactions-table tbody tr td input[type="number"],
+.transactions-table tbody tr td select {
+  padding: 4px 8px;
+  width: 100%;
+}
+
+.actions-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.row-action-button {
+  background: none;
+  padding: 4px 8px;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s;
+  opacity: 0;
+}
+
+.transactions-table tbody tr:hover .row-action-button,
+.row-action-button.save-button,
+.row-action-button.cancel-button {
+  opacity: 1;
+}
+
+.row-action-button:hover {
+  opacity: 0.7;
+}
