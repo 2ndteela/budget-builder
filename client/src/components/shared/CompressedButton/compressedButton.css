@@ -44,3 +44,25 @@
   padding-left: 8px;
   opacity: 1;
 }
+
+@media (max-width: 768px) {
+  .compressed-button {
+    padding-right: 12px;
+    min-height: 44px;
+    height: 44px;
+  }
+
+  .compressed-button .compressed-button-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .compressed-button .compressed-button-text-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .compressed-button .compressed-button-text {
+    padding-left: 8px;
+    opacity: 1;
+  }
+}

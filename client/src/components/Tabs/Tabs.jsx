@@ -23,13 +23,24 @@ export default function Tabs({ tabs = [] }) {
   return (
     <div className='tabs-container'>
       <div className='tabs-headers'>
-        {tabs?.map((t) => (
-          <button
-            key={t.key}
-            className={`${activeTab === t.key ? 'active-tab' : ''}`}
-            onClick={() => updateOpenTab(t.key)}
-          >{t.title}</button>)
-        )}
+        <div className='tabs-buttons'>
+          {tabs?.map((t) => (
+            <button
+              key={t.key}
+              className={`${activeTab === t.key ? 'active-tab' : ''}`}
+              onClick={() => updateOpenTab(t.key)}
+            >{t.title}</button>)
+          )}
+        </div>
+        <select
+          className='tabs-dropdown'
+          value={activeTab}
+          onChange={(e) => updateOpenTab(e.target.value)}
+        >
+          {tabs?.map((t) => (
+            <option key={t.key} value={t.key}>{t.title}</option>
+          ))}
+        </select>
       </div>
       <div className='tabs-body'>
         <BodyContent {...{ tabs, activeTab }} />

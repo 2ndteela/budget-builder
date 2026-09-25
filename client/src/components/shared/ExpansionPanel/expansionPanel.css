@@ -60,3 +60,14 @@ details summary:hover {
   filter: brightness(1.2);
   opacity: 1;
 }
+
+@media (max-width: 768px) {
+  details summary {
+    padding: 14px 16px;
+    min-height: 52px;
+  }
+
+  details[open]::details-content {
+    padding-top: 12px;
+  }
+}

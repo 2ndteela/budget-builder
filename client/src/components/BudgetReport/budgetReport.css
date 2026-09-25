@@ -236,3 +236,58 @@
 .nested-indent-deep {
   padding-left: 64px !important;
 }
+
+@media (max-width: 768px) {
+  .budget-report {
+    padding: 12px;
+  }
+
+  .budget-summary {
+    flex-direction: column;
+    gap: 20px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .budget-summary thead th {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+
+  .budget-summary tbody td {
+    font-size: 15px;
+    padding: 12px;
+  }
+
+  .budget-summary tbody tr:last-child td {
+    font-size: 16px;
+  }
+
+  .summary-item span:last-child {
+    font-size: 20px;
+  }
+
+  .budget-table {
+    font-size: 13px;
+  }
+
+  .budget-table th,
+  .budget-table td {
+    padding: 8px;
+  }
+
+  .nested-indent {
+    padding-left: 20px !important;
+  }
+
+  .nested-indent-deep {
+    padding-left: 40px !important;
+  }
+
+  .month-tag {
+    display: block;
+    margin-left: 0;
+    margin-top: 4px;
+    width: fit-content;
+  }
+}

@@ -14,12 +14,8 @@
   transition: background 0.2s ease;
 }
 
-.projected-expenses .sortable-header:hover {
-  background: var(--surface-raised);
-}
-
 .projected-expenses td {
-  padding: 4px 12px;
+  padding: 8px;
 }
 
 .projected-expenses th:nth-child(2),
@@ -69,11 +65,11 @@
 .projected-expense-table-row {
   border-left: 3px solid var(--bg-primary, var(--color-gray-primary));
   transition: background-color 0.3s;
-  background: var(--surface-raised);
+  background: var(--bg-secondary, var(--surface-raised));
 }
 
 .projected-expense-table-row:hover {
-  background: linear-gradient(90deg, var(--bg-transparent-hover, var(--color-gray-transparent-hover)) 0%, rgba(255, 255, 255, 0.01) 100%);
+  background: linear-gradient(90deg, var(--bg-transparent-hover, var(--color-gray-transparent-hover)) 0%, var(--bg-secondary, var(--surface-raised)) 100%);
 }
 
 
@@ -121,13 +117,13 @@
 
 .category-header-row {
   cursor: pointer;
-  border-left: 4px solid var(--bg-primary, var(--color-gray-primary));
+  border-left: 3px solid var(--bg-primary, var(--color-gray-primary));
   background: var(--surface-panel);
   transition: all 0.2s ease;
 }
 
-.category-header-row:hover {
-  background: var(--surface-raised);
+.category-header-row.expanded {
+  background: var(--bg-primary, var(--color-gray-primary));
 }
 
 .category-header-row .expand-icon {
@@ -173,4 +169,34 @@
 
 .new-expense-form button {
   white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .projected-expenses .row-action-button {
+    font-size: 20px;
+    padding: 8px 12px;
+    min-width: 44px;
+    min-height: 44px;
+    opacity: 1;
+  }
+
+  .new-expense-form {
+    flex-wrap: wrap;
+    padding: 12px;
+  }
+
+  .new-expense-name,
+  .new-expense-value,
+  .new-expense-category {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .new-expense-form button {
+    width: 100%;
+  }
+
+  .projected-expenses td {
+    padding: 8px;
+  }
 }

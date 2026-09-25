@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import useAppData from '../../../DataContext/useAppData'
-import ProjectedExpenseSelect from '../../shared/ProjectedExpenseSelect/ProjectedExpenseSelect'
+import WaterfallSelector from '../../shared/WaterfallSelector/WaterfallSelector'
 import { formatBudgetMonth } from '../../../utilities/dateFormatting'
+import buildProjectedExpenseOptions from '../../../utilities/buildProjectedExpenseOptions'
 import './createNewTransaction.css'
 import CompressedButton from '../../shared/CompressedButton/CompressedButton'
 import { MdAdd } from 'react-icons/md'
@@ -34,6 +35,17 @@ export default function CreateNewTransaction() {
   const [transaction, setTransaction] = useState(() => createDefaultTransaction(accounts, monthlyBudgets))
 
   const budgetExpenses = projectedExpenses.filter((expense) => expense.monthlyBudgetId === transaction.monthlyBudgetId)
+
+  const expenseOptions = useMemo(
+    () => buildProjectedExpenseOptions(categories, budgetExpenses),
+    [categories, budgetExpenses]
+  )
+
+  const selectedExpenseName = useMemo(() => {
+    if (!transaction.projectedExpenseId) return 'Unassigned'
+    const expense = projectedExpenses.find((e) => e.id === transaction.projectedExpenseId)
+    return expense?.name || 'Unassigned'
+  }, [transaction.projectedExpenseId, projectedExpenses])
 
   const update = (field, value) => setTransaction({ ...transaction, [field]: value })
 
@@ -101,11 +113,11 @@ export default function CreateNewTransaction() {
               />
             </div>
           )}
-          <ProjectedExpenseSelect
-            categories={categories}
-            projectedExpenses={budgetExpenses}
-            value={transaction.projectedExpenseId}
-            onChange={(value) => update('projectedExpenseId', value)}
+          <WaterfallSelector
+            label="Projected Expense"
+            value={selectedExpenseName}
+            onChange={(option) => update('projectedExpenseId', option.value)}
+            menuOptions={expenseOptions}
           />
           <select
             value={transaction.accountId}
