@@ -10,3 +10,14 @@
   flex-direction: row;
   gap: 16px;
 }
+
+@media (max-width: 768px) {
+  .projected-costs-container {
+    gap: 12px;
+  }
+
+  .row-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+}

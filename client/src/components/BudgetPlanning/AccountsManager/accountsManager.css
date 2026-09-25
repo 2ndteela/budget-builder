@@ -77,3 +77,25 @@
   padding: 8px 16px;
   white-space: nowrap;
 }
+
+@media (max-width: 768px) {
+  .accounts-manager {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .account-action-btn {
+    font-size: 22px;
+    padding: 8px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .new-account-section {
+    flex-direction: column;
+  }
+
+  .create-account-btn {
+    width: 100%;
+  }
+}

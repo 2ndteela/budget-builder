@@ -391,14 +391,14 @@ export default function ProjectedExpenses({ monthlyBudgetId }) {
               return (
                 <React.Fragment key={categoryGroup.id}>
                   <tr
-                    className={`category-header-row color-${category?.color || 'gray'}`}
+                    className={`category-header-row color-${category?.color || 'gray'}${isExpanded ? ' expanded' : ''}`}
                     onClick={() => toggleCategory(categoryGroup.id)}
                   >
                     <td className='expand-icon'>
                       <BiCaretDown style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s' }} />
                     </td>
-                    <td style={{ textAlign: 'left', fontWeight: 600 }}>{categoryGroup.name}</td>
-                    <td style={{ fontWeight: 600, color: categoryGroup.isIncome ? 'var(--color-positive)' : null }}>
+                    <td style={{ textAlign: 'left' }}>{categoryGroup.name}</td>
+                    <td style={{ color: categoryGroup.isIncome ? 'var(--color-positive)' : null }}>
                       {new Intl.NumberFormat('en-US', CURRENCY_FORMAT).format(categoryTotal)}
                     </td>
                     <td></td>

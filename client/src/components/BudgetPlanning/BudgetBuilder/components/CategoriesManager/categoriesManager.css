@@ -120,3 +120,32 @@
   cursor: pointer;
   white-space: nowrap;
 }
+
+@media (max-width: 768px) {
+  #categories-container {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .category-action-btn {
+    font-size: 22px;
+    padding: 8px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .new-category-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .category-name-input,
+  .category-color-select {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .create-category-btn {
+    width: 100%;
+  }
+}

@@ -1,10 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
 import { MdClose, MdDelete, MdEdit, MdSave } from 'react-icons/md'
 import EditableField from '../../shared/EditableField/EditableField'
-import ProjectedExpenseSelect from '../../shared/ProjectedExpenseSelect/ProjectedExpenseSelect'
+import WaterfallSelector from '../../shared/WaterfallSelector/WaterfallSelector'
 import MatchableText from '../../shared/MatchableText/MatchableText'
 import useAppData from '../../../DataContext/useAppData'
 import { formatBudgetMonth, formatTransactionDate } from '../../../utilities/dateFormatting'
+import buildProjectedExpenseOptions from '../../../utilities/buildProjectedExpenseOptions'
 import './transactionTable.css'
 
 function TransactionRow({ transaction, isSelected, onToggleSelected, searchText }) {
@@ -24,6 +25,10 @@ function TransactionRow({ transaction, isSelected, onToggleSelected, searchText 
   const account = accounts.find((item) => item.id === transaction.accountId)
   // Only the expenses planned for this transaction's month can be matched to it.
   const budgetExpenses = projectedExpenses.filter((item) => item.monthlyBudgetId === transaction.monthlyBudgetId)
+  const expenseOptions = useMemo(
+    () => buildProjectedExpenseOptions(categories, budgetExpenses),
+    [categories, budgetExpenses]
+  )
 
   const save = async () => {
     await updateTransaction({ ...edited, amount: Math.abs(edited.amount) })
@@ -78,11 +83,10 @@ function TransactionRow({ transaction, isSelected, onToggleSelected, searchText 
       </td>
       <td>
         {isEditing ? (
-          <ProjectedExpenseSelect
-            categories={categories}
-            projectedExpenses={budgetExpenses}
-            value={edited.projectedExpenseId}
-            onChange={(projectedExpenseId) => setEdited({ ...edited, projectedExpenseId })}
+          <WaterfallSelector
+            value={expense?.name || 'Unassigned'}
+            onChange={(option) => setEdited({ ...edited, projectedExpenseId: option.value })}
+            menuOptions={expenseOptions}
           />
         ) : expense?.name || '—'}
       </td>
@@ -154,6 +158,16 @@ export default function TransactionTable({ transactions, searchText }) {
     () => projectedExpenses.filter((expense) => expense.monthlyBudgetId === sharedBudgetId),
     [projectedExpenses, sharedBudgetId])
 
+  const bulkExpenseOptions = useMemo(
+    () => buildProjectedExpenseOptions(categories, budgetExpenses),
+    [categories, budgetExpenses])
+
+  const bulkExpenseName = useMemo(() => {
+    if (!bulkExpenseId) return 'Unassigned'
+    const expense = projectedExpenses.find((e) => e.id === bulkExpenseId)
+    return expense?.name || 'Unassigned'
+  }, [bulkExpenseId, projectedExpenses])
+
   const clearSelection = () => {
     setSelectedIds([])
     setBulkExpenseId(null)
@@ -203,11 +217,11 @@ export default function TransactionTable({ transactions, searchText }) {
             </span>
           ) : (
             <>
-              <ProjectedExpenseSelect
-                categories={categories}
-                projectedExpenses={budgetExpenses}
-                value={bulkExpenseId}
-                onChange={setBulkExpenseId}
+              <WaterfallSelector
+                label="Projected Expense"
+                value={bulkExpenseName}
+                onChange={(option) => setBulkExpenseId(option.value)}
+                menuOptions={bulkExpenseOptions}
               />
               <button className='btn-green' onClick={assignSelected}>
                 Assign {selectedIds.length} to{' '}

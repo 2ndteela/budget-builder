@@ -53,3 +53,40 @@
   width: 500px;
   max-width: 100%;
 }
+
+@media (max-width: 768px) {
+  .transactions-container {
+    gap: 12px;
+  }
+
+  #transactions-table-options {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  #new-transactions-options {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  #new-transactions-options button {
+    width: 100%;
+  }
+
+  .filters-container {
+    gap: 12px;
+  }
+
+  .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters-container .new-transaction-wrapper {
+    margin-left: 0;
+  }
+
+  #filter-transactions {
+    width: 100%;
+  }
+}

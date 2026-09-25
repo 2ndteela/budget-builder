@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import './burnUpChart.css'
 
@@ -29,11 +29,19 @@ export default function BurnUpChart({ dataPoints = [] }) {
   // A multi-month range runs to a few hundred days, so thin the labels to keep them legible
   const labelInterval = Math.max(0, Math.ceil(dataPoints.length / 12) - 1)
   const palette = useMemo(() => readPalette(), [])
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   return (
     <div className="burnup-chart-container">
       <h2>Expense Burn-Up</h2>
-      <ResponsiveContainer width="100%" height={400}>
+      <ResponsiveContainer width="100%" height={isMobile ? 300 : 400}>
         <LineChart
           data={dataPoints}
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}

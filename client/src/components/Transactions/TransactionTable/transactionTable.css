@@ -138,9 +138,13 @@
 
 .transactions-table tbody tr td input[type="text"],
 .transactions-table tbody tr td input[type="number"],
-.transactions-table tbody tr td select {
-  padding: 4px 8px;
+.transactions-table tbody tr td select,
+.transactions-table tbody tr td .editable-field input,
+.transactions-table tbody tr td .editable-field select {
+  padding: 8px 12px;
   width: 100%;
+  min-height: 38px;
+  box-sizing: border-box;
 }
 
 .actions-cell {
@@ -167,4 +171,37 @@
 
 .row-action-button:hover {
   opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+  .transactions-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .transactions-table th,
+  .transactions-table td {
+    padding: 10px 12px;
+  }
+
+  .row-action-button {
+    font-size: 20px;
+    padding: 8px 12px;
+    min-width: 44px;
+    min-height: 44px;
+    opacity: 1;
+  }
+
+  .bulk-assign-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .bulk-assign-bar button {
+    min-height: 44px;
+  }
+
+  .bulk-assign-warning {
+    width: 100%;
+  }
 }
