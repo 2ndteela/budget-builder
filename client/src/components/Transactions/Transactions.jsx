@@ -3,7 +3,7 @@ import './transactions.css'
 import CategoryChip from '../shared/CategoryChip/CategoryChip'
 import LoadingSpinner from '../shared/LoadingSpinner/LoadingSpinner'
 import useAppData from '../../DataContext/useAppData'
-import CsvUpload from './CsvImport/CsvUpload'
+import FileUpload from './CsvImport/FileUpload'
 import DuplicatedTransactionsDialog from './CsvImport/DuplicatedTransactionsDialog'
 import CreateNewTransaction from './CreateNewTransaction/CreateNewTransaction'
 import TransactionTable from './TransactionTable/TransactionTable'
@@ -117,7 +117,7 @@ export default function Transactions() {
             <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }} >
               <label className='filter-label'>Categories</label>
               <div id='new-transactions-options'>
-                <CsvUpload onImport={handleCsvImport} />
+                <FileUpload onImport={handleCsvImport} />
                 <CreateNewTransaction />
               </div>
             </div>

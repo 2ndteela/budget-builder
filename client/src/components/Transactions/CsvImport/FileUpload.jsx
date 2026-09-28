@@ -40,9 +40,43 @@ const parseCsvLine = (line) => {
   return values
 }
 
+const parseOfx = (text) => {
+  const parser = new DOMParser()
+  const xmlDoc = parser.parseFromString(text, 'text/xml')
+
+  const transactions = []
+  const stmtTrnElements = xmlDoc.getElementsByTagName('STMTTRN')
+
+  for (let i = 0; i < stmtTrnElements.length; i++) {
+    const trn = stmtTrnElements[i]
+    const getTag = (tagName) => trn.getElementsByTagName(tagName)[0]?.textContent || ''
+
+    const dateStr = getTag('DTPOSTED')
+    const amount = parseFloat(getTag('TRNAMT')) || 0
+    const name = getTag('NAME') || getTag('MEMO') || ''
+    const fitid = getTag('FITID')
+
+    // OFX date format: YYYYMMDD or YYYYMMDDHHMMSS
+    const year = parseInt(dateStr.substring(0, 4))
+    const month = parseInt(dateStr.substring(4, 6))
+    const day = parseInt(dateStr.substring(6, 8))
+
+    if (!isNaN(year) && !isNaN(month) && !isNaN(day) && name) {
+      transactions.push({
+        date: new Date(year, month - 1, day),
+        title: name,
+        amount: Math.abs(amount),
+        bankTransactionId: fitid
+      })
+    }
+  }
+
+  return transactions
+}
+
 const columnLabel = (field) => field.charAt(0).toUpperCase() + field.slice(1)
 
-export default function CsvUpload({ onImport }) {
+export default function FileUpload({ onImport }) {
   const {
     accounts: { accounts },
     monthlyBudgets: { monthlyBudgets }
@@ -51,6 +85,7 @@ export default function CsvUpload({ onImport }) {
   const [csvData, setCsvData] = useState(emptyCsvData)
   const [columnMapping, setColumnMapping] = useState(emptyColumnMapping)
   const [csvAccountId, setCsvAccountId] = useState(accounts[0]?.id || 1)
+  const [fileType, setFileType] = useState('')
   const fileInputRef = useRef(null)
 
   // A transaction stores only the day of the month, so each row needs the monthly budget
@@ -93,19 +128,53 @@ export default function CsvUpload({ onImport }) {
     setCsvData(emptyCsvData)
     setColumnMapping(emptyColumnMapping)
     setCsvAccountId(accounts[0]?.id || 1)
+    setFileType('')
   }
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0]
     if (file) {
+      const extension = file.name.split('.').pop().toLowerCase()
+      setFileType(extension)
+
       const reader = new FileReader()
       reader.onload = ({ target }) => {
-        const lines = target.result.trim().split('\n')
-        const rows = lines.slice(1).map((line) => parseCsvLine(line))
+        if (extension === 'csv') {
+          // CSV requires column mapping
+          const lines = target.result.trim().split('\n')
+          const rows = lines.slice(1).map((line) => parseCsvLine(line))
 
-        setCsvData({ headers: parseCsvLine(lines[0]), rows, firstRow: rows[0] || [] })
-        setColumnMapping(emptyColumnMapping)
-        setShowCsvMappingDialog(true)
+          setCsvData({ headers: parseCsvLine(lines[0]), rows, firstRow: rows[0] || [] })
+          setColumnMapping(emptyColumnMapping)
+          setShowCsvMappingDialog(true)
+        } else if (['ofx', 'qfx', 'qbo'].includes(extension)) {
+          // OFX/QFX/QBO can be parsed directly
+          const ofxTransactions = parseOfx(target.result)
+
+          // Convert to importable format with budget assignment
+          const importable = ofxTransactions.map(trn => {
+            const budget = monthlyBudgets.find((item) =>
+              item.month === trn.date.getMonth() + 1 && item.year === trn.date.getFullYear())
+
+            if (!budget) return null
+
+            return {
+              bankTransactionId: trn.bankTransactionId,
+              title: trn.title,
+              amount: trn.amount,
+              date: trn.date.getDate(),
+              monthlyBudgetId: budget.id,
+              projectedExpenseId: null,
+              accountId: accounts[0]?.id || 1
+            }
+          }).filter(Boolean)
+
+          if (importable.length > 0) {
+            onImport(importable)
+          } else {
+            alert('No valid transactions found in file or all transactions fall outside existing budgets.')
+          }
+        }
       }
       reader.readAsText(file)
     }
@@ -119,13 +188,13 @@ export default function CsvUpload({ onImport }) {
 
   return (
     <>
-      <CompressedButton id='upload-csv-button' color="green" onClick={() => fileInputRef.current?.click()} Icon={MdUploadFile}>
-        Upload CSV
+      <CompressedButton id='upload-file-button' color="green" onClick={() => fileInputRef.current?.click()} Icon={MdUploadFile}>
+        File Upload
       </CompressedButton>
       <input
         ref={fileInputRef}
         type='file'
-        accept='.csv'
+        accept='.csv,.ofx,.qfx,.qbo'
         style={{ display: 'none' }}
         onChange={handleFileUpload}
       />
