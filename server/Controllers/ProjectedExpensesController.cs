@@ -25,11 +25,24 @@ public class ProjectedExpensesController : ControllerBase
       .ToListAsync();
   }
 
+  /*
+    Controller returns a list of CategoryDTOs, each holding its ProjectedExpense suggestions.
+    If expenses are assigned a projected expense, override the name of the expense with the name of the projected expense
+    Combines suggestions that share the same name into a grand total
+    If the group does not span the 3 months specified it is thrown out
+    That total is then averaged out by how many months that group spans
+  */
   [HttpGet("suggestions")]
-  public async Task<ActionResult<IEnumerable<ProjectedExpenseDTO>>> GetProjectedExpenseSuggestions([FromQuery] string? date)
+  public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetProjectedExpenseSuggestions([FromQuery] string? date)
   {
-    var endDate = ParseMonth(date) ?? DateTime.Today;
-    var startDate = endDate.AddMonths(-3);
+    const int monthsToSpan = 6;
+    const int occurrenceFilter = 3;
+
+    // The window is the full months leading up to the target month; the target month
+    // itself is still being spent in, so it would drag the averages down.
+    var targetMonth = ParseMonth(date) ?? new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    var startDate = targetMonth.AddMonths(-monthsToSpan);
+    var endDate = targetMonth.AddMonths(-1);
     var startKey = startDate.Year * 100 + startDate.Month;
     var endKey = endDate.Year * 100 + endDate.Month;
 
@@ -40,30 +53,43 @@ public class ProjectedExpensesController : ControllerBase
                   t.MonthlyBudget.Year * 100 + t.MonthlyBudget.Month <= endKey)
       .ToListAsync();
 
-    var groupedByTitle = new Dictionary<string, List<Transaction>>();
+    var groupedByName = new Dictionary<string, List<Transaction>>();
 
-    for (int i = 0; i < previousTransactions.Count; i++)
+    foreach (var current in previousTransactions)
     {
-      var current = previousTransactions[i];
+      // The catch-all's name is just "Unassigned", so grouping by it would lump every
+      // unplanned transaction together — those fall back to their own title.
+      var expenseName = current.ProjectedExpense is { IsCatchAll: false } plan
+        ? plan.Name
+        : current.Title;
 
-      if (groupedByTitle.TryGetValue(current.Title, out var existing))
+      // Compared in lowercase so "Netflix" and "netflix" land in the same group
+      var nameKey = expenseName.ToLower();
+
+      if (groupedByName.TryGetValue(nameKey, out var existing))
         existing.Add(current);
       else
-        groupedByTitle.Add(current.Title, new List<Transaction> { current });
+        groupedByName.Add(nameKey, new List<Transaction> { current });
     }
 
-    var suggestions = new List<ProjectedExpenseDTO>();
+    var suggestionsByCategory = new Dictionary<int, CategoryDTO>();
 
     // A suggestion never comes back without a category — a title we can't attribute to
     // anything falls back to Unassigned, so it can be accepted as-is.
     var unassigned = await BudgetDefaults.GetUnassignedCategoryAsync(_context);
 
-    foreach (var group in groupedByTitle.Values)
+    foreach (var group in groupedByName.Values)
     {
-      // 1). total spent across the group
+      // 1). only recurring expenses make suggestions — the group must show up in every month
+      var monthsSpanned = group
+        .Select(t => t.MonthlyBudget!.Year * 100 + t.MonthlyBudget.Month)
+        .Distinct()
+        .Count();
+
+      if (monthsSpanned < occurrenceFilter) continue;
+
       var totalSpent = group.Sum(t => t.Amount);
-      var uniqueMonths = group.Select(t => t.MonthlyBudgetId).Distinct().Count();
-      var averageSpent = uniqueMonths > 0 ? totalSpent / uniqueMonths : totalSpent;
+      var averageSpent = totalSpent / monthsSpanned;
 
       // 2). most common category tied to the group's transactions
       var mostCommonCategory = group
@@ -73,27 +99,37 @@ public class ProjectedExpensesController : ControllerBase
         .Select(g => g.Key)
         .FirstOrDefault() ?? unassigned;
 
-      // 3). Use transaction title as suggestion name
-      var suggestionName = group.First().Title;
+      // 3). display name keeps its original casing — the plan's name when one was assigned
+      var suggestionName = group
+        .Select(t => t.ProjectedExpense is { IsCatchAll: false } plan ? plan.Name : t.Title)
+        .First();
 
-      // 4). build the suggestion from the totals and most common category/expense above
-      suggestions.Add(new ProjectedExpenseDTO
+      // 4). file the suggestion under its category, creating the category on first use
+      if (!suggestionsByCategory.TryGetValue(mostCommonCategory.Id, out var categoryDTO))
       {
-        Name = suggestionName,
-        SuggestedValue = Math.Ceiling(averageSpent),
-        SuggestedCategory = new CategoryDTO
+        categoryDTO = new CategoryDTO
         {
           Id = mostCommonCategory.Id,
           Name = mostCommonCategory.Name,
           Color = mostCommonCategory.Color,
           IsIncome = mostCommonCategory.IsIncome,
-          IsSystem = mostCommonCategory.IsSystem
-        }
+          IsSystem = mostCommonCategory.IsSystem,
+          ProjectedExpenses = new List<ProjectedExpenseDTO>(),
+          Transactions = new List<TransactionDTO>()
+        };
+        suggestionsByCategory.Add(mostCommonCategory.Id, categoryDTO);
+      }
+
+      categoryDTO.ProjectedExpenses.Add(new ProjectedExpenseDTO
+      {
+        Name = suggestionName,
+        SuggestedValue = Math.Ceiling(averageSpent),
+        CategoryId = mostCommonCategory.Id
       });
     }
 
-    // 5). serve the suggestions back to the user
-    return suggestions;
+    // 5). serve the suggestions back to the user, grouped by category
+    return suggestionsByCategory.Values.ToList();
   }
 
   [HttpGet("{id}")]

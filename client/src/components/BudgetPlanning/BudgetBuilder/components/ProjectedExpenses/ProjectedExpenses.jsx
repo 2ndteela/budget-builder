@@ -275,41 +275,45 @@ export default function ProjectedExpenses({ monthlyBudgetId }) {
       const resp = await fetch('http://localhost:5102/projected-expenses/suggestions')
       if (!resp.ok) throw new Error('Failed to fetch suggestions')
 
-      const data = await resp.json()
-      setSuggestedExpenses(data.filter((suggestion) =>
-        !expenses.some((expense) => expense.name === suggestion.name)))
+      const categories = await resp.json()
+      const existingNames = expenses.map((expense) => expense.name.toLowerCase())
+
+      // Drop anything already planned this month, then any category left with nothing to suggest
+      setSuggestedExpenses(categories
+        .map((category) => ({
+          ...category,
+          projectedExpenses: category.projectedExpenses
+            .filter((suggestion) => !existingNames.includes(suggestion.name.toLowerCase()))
+            .map((suggestion) => ({ ...suggestion, value: suggestion.suggestedValue }))
+        }))
+        .filter((category) => category.projectedExpenses.length > 0))
     } catch (err) {
       alert('Error creating suggestions')
       console.error(err)
     }
   }
 
-  const addSuggestion = async (suggestion) => {
+  // Unmounting the suggestions brings back the Create Suggestions button
+  const clearSuggestions = useCallback(() => setSuggestedExpenses([]), [])
+
+  // Resolves whether the add went through, so the card knows to take the suggestion off
+  const addSuggestion = useCallback(async (suggestion) => {
     try {
       await addNewProjectedExpense({
         name: suggestion.name,
-        value: suggestion.suggestedValue,
+        value: suggestion.value,
         // Suggestions come back with a category the server inferred, or Unassigned when
         // it could not infer one, so a suggestion is always acceptable as-is.
-        categoryId: suggestion.suggestedCategory?.id || 0,
+        categoryId: suggestion.categoryId || 0,
         monthlyBudgetId
       })
-      dismissSuggestion(suggestion)
+      return true
     } catch (err) {
       alert('Error adding suggested expense')
       console.error(err)
+      return false
     }
-  }
-
-  const dismissSuggestion = (suggestion) =>
-    setSuggestedExpenses((prev) => prev.filter((item) => item.name !== suggestion.name))
-
-  // Suggestions are client-side only, so folding them together is one new expense carrying
-  // the summed amount; the suggestions it replaces come off the list.
-  const combineSuggestions = async ({ name, value, categoryId, sources }) => {
-    await addNewProjectedExpense({ name, value, categoryId, monthlyBudgetId })
-    setSuggestedExpenses((prev) => prev.filter((item) => !sources.includes(item.name)))
-  }
+  }, [addNewProjectedExpense, monthlyBudgetId])
 
   // The same row does double duty: a brand new expense, or the merge of the checked ones
   const isCombining = !showNewExpense && checkedFields.length > 1
@@ -321,8 +325,7 @@ export default function ProjectedExpenses({ monthlyBudgetId }) {
         <SuggestedExpenses
           suggestions={suggestedExpenses}
           onAdd={addSuggestion}
-          onDismiss={dismissSuggestion}
-          onCombine={combineSuggestions}
+          onCleared={clearSuggestions}
         />
       )}
       <div className='row-container budget-expenses-header'>

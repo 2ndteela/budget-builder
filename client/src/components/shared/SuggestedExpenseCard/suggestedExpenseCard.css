@@ -1,0 +1,55 @@
+/* The header takes the category color from the .color-<hue> utility on the panel; the body
+   is overridden to the neutral raised surface so every card reads the same below the header. */
+.suggested-expense-card details {
+  background-color: var(--surface-raised);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  margin-bottom: 0;
+}
+
+.suggested-expense-card details[open]::details-content {
+  padding-top: 0;
+}
+
+.suggested-expense-card .expansion-panel-body {
+  padding: 8px 0;
+}
+
+.suggested-expense-card-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 24px;
+}
+
+.suggested-expense-card-row:hover {
+  background-color: var(--color-gray-transparent-hover);
+}
+
+.suggested-expense-card-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggested-expense-card-value {
+  color: var(--text-muted);
+}
+
+.suggested-expense-card-row .row-action-button {
+  opacity: 0;
+}
+
+.suggested-expense-card-row:hover .row-action-button {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .suggested-expense-card-row {
+    padding: 4px 8px 4px 16px;
+  }
+
+  .suggested-expense-card-row .row-action-button {
+    opacity: 1;
+  }
+}
