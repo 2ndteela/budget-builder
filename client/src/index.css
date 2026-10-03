@@ -197,7 +197,7 @@ td {
   --color-gray-primary: #2C2C2C;
   --color-gray-secondary: #1E1E1E;
   --color-gray-transparent: rgba(255, 255, 255, 0.05);
-  --color-gray-transparent-hover: rgba(255, 255, 255, 0.08);
+  --color-gray-transparent-hover: rgba(255, 255, 255, 0.06);
 
   /* Semantic amounts — vibrant against the dark surfaces */
   --color-positive: #22C55E;

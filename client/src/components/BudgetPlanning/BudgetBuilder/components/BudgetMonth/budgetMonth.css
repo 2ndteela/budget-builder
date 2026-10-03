@@ -48,3 +48,25 @@
 .budget-expenses-header h4 {
   margin: 0;
 }
+
+@media (max-width: 768px) {
+  /* .row-container stacks on mobile, so flex-start would shrink each panel to its content */
+  .budget-month {
+    align-items: stretch;
+  }
+
+  .budget-summary-panel {
+    width: 100%;
+  }
+
+  .budget-expenses-header {
+    align-items: stretch;
+  }
+
+  /* The header's buttons stay side by side and wrap rather than stacking one per line */
+  .budget-expenses-header .row-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}

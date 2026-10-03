@@ -1,45 +1,137 @@
-.projected-expenses table {
-  background-color: var(--surface-raised);
-  table-layout: fixed;
+/* Independent columns (count set in ProjectedExpenses.jsx) so an expanded card only pushes
+   down the cards beneath it */
+.projected-expense-cards {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.projected-expense-column {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Header takes the category color from the .color-<hue> utility on the panel; the body is
+   the neutral raised surface so every card reads the same below its header. */
+.projected-expense-card details {
+  background-color: var(--surface-panel);
+  margin-bottom: 0;
+}
+
+.projected-expense-card details[open]::details-content {
+  padding-top: 0;
+}
+
+.projected-expense-card .expansion-panel-body {
+  padding: 8px 0;
+}
+
+.projected-expense-card-header {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.projected-expense-card-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.expense-amounts {
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: normal;
+  color: var(--text-muted);
+}
+
+.projected-expense-card-header .expense-amounts {
+  color: var(--text-bright);
+}
+
+/* Planned vs. spent. Rows fill with the category color; the header sits on that color,
+   so its bar fills light instead. */
+.expense-progress-track {
+  height: 4px;
   width: 100%;
+  background-color: var(--field-bg);
+  overflow: hidden;
 }
 
-.projected-expenses thead {
-  background-color: var(--surface-sunken);
+.expense-progress-track.placeholder {
+  visibility: hidden;
 }
 
-.projected-expenses .sortable-header {
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.2s ease;
+.expense-progress-fill {
+  height: 100%;
+  background-color: var(--bg-primary, var(--color-gray-primary));
+  transition: width 0.3s ease;
 }
 
-.projected-expenses td {
-  padding: 8px;
+.projected-expense-card-header .expense-progress-track {
+  background-color: rgba(0, 0, 0, 0.25);
 }
 
-.projected-expenses th:nth-child(2),
-.projected-expenses td:nth-child(2) {
-  width: auto;
+.projected-expense-card-header .expense-progress-fill {
+  background-color: rgba(255, 255, 255, 0.85);
 }
 
-.projected-expenses th:nth-child(3),
-.projected-expenses td:nth-child(3) {
-  text-align: right;
-  width: 180px;
+.expense-progress-fill.over,
+.projected-expense-card-header .expense-progress-fill.over {
+  background-color: var(--color-negative);
 }
 
-.projected-expenses th:nth-child(4),
-.projected-expenses td:nth-child(4) {
-  width: 80px;
-  text-align: center;
+.projected-expense-card-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 8px 8px 24px;
+  /* Transparent so the card's surface is what shows through */
+  background-color: transparent;
 }
 
-.projected-expenses .actions-cell {
+.projected-expense-card-row:hover,
+.projected-expense-card-row.editing {
+  background-color: var(--color-gray-transparent-hover);
+}
+
+.projected-expense-card-row-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.projected-expense-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.projected-expenses .row-action-button {
+.projected-expense-value-input {
+  width: 110px;
+}
+
+.projected-expense-card-row input {
+  width: 100%;
+}
+
+.projected-expense-actions {
+  display: flex;
+  white-space: nowrap;
+  min-width: 64px;
+  justify-content: flex-end;
+}
+
+.projected-expense-card-row .row-action-button {
   background: none;
   border: none;
   color: var(--text-primary);
@@ -51,56 +143,19 @@
   transition: opacity 0.3s;
 }
 
-.projected-expense-table-row:hover .row-action-button,
-.projected-expenses .row-action-button.save-button,
-.projected-expenses .row-action-button.cancel-button {
+.projected-expense-card-row:hover .row-action-button,
+.projected-expense-card-row .row-action-button.save-button,
+.projected-expense-card-row .row-action-button.cancel-button {
   opacity: 1;
 }
 
-.projected-expenses .row-action-button:hover {
+.projected-expense-card-row .row-action-button:hover {
   opacity: 0.7;
 }
 
-/* --bg-* come from the .color-<hue> utility on the row */
-.projected-expense-table-row {
-  border-left: 3px solid var(--bg-primary, var(--color-gray-primary));
-  transition: background-color 0.3s;
-  background: var(--bg-secondary, var(--surface-raised));
-}
-
-.projected-expense-table-row:hover {
-  background: linear-gradient(90deg, var(--bg-transparent-hover, var(--color-gray-transparent-hover)) 0%, var(--bg-secondary, var(--surface-raised)) 100%);
-}
-
-
-.projected-expense-table-row td:nth-child(2) {
-  padding-left: 0px;
-}
-
-.projected-expenses input,
-.projected-expenses select {
-  width: 100%;
-}
-
-/* The combine column. A checkbox keeps its own size — the 100% above would distort it. */
-.projected-expenses .select-cell {
-  width: 40px;
-  text-align: center;
-}
-
-.projected-expenses input[type='checkbox'] {
-  width: auto;
-  cursor: pointer;
-  accent-color: var(--bg-primary, var(--color-blue-primary));
-}
-
-.projected-expenses input[type='checkbox']:disabled {
-  cursor: not-allowed;
-  opacity: 0.35;
-}
-
-.empty-budget-row td {
+.empty-budget-message {
   padding: 16px 12px;
+  background: var(--surface-panel);
   color: var(--text-muted);
   font-style: italic;
 }
@@ -110,38 +165,15 @@
   font-size: 13px;
 }
 
-.projected-expenses .total-row td {
-  border-top: 1px solid var(--divider);
-  padding-top: 12px;
-}
-
-.category-header-row {
-  cursor: pointer;
-  border-left: 3px solid var(--bg-primary, var(--color-gray-primary));
-  background: var(--surface-panel);
-  transition: all 0.2s ease;
-}
-
-.category-header-row.expanded {
-  background: var(--bg-primary, var(--color-gray-primary));
-}
-
-.category-header-row .expand-icon {
-  text-align: center;
-  color: var(--text-subtle);
-  font-size: 12px;
-  padding: 4px;
-}
-
 .new-expense-form {
   display: flex;
   gap: 12px;
   padding: 16px;
-  background: var(--surface-raised);
+  margin-bottom: 16px;
+  background: var(--surface-panel);
   align-items: center;
   flex-wrap: nowrap;
   width: 100%;
-  padding-inline-start: 0;
 }
 
 .new-expense-name {
@@ -172,7 +204,12 @@
 }
 
 @media (max-width: 768px) {
-  .projected-expenses .row-action-button {
+  .projected-expense-card-row {
+    padding: 8px 8px 8px 16px;
+
+  }
+
+  .projected-expense-card-row .row-action-button {
     font-size: 20px;
     padding: 8px 12px;
     min-width: 44px;
@@ -194,9 +231,5 @@
 
   .new-expense-form button {
     width: 100%;
-  }
-
-  .projected-expenses td {
-    padding: 8px;
   }
 }
