@@ -77,13 +77,11 @@
   font-weight: bold;
 }
 
-.income,
-.category-row td.income {
+.income {
   color: var(--color-positive);
 }
 
-.expense,
-.category-row td.expense {
+.expense {
   color: var(--color-negative);
 }
 
@@ -96,145 +94,6 @@
   color: var(--text-muted);
   font-style: italic;
   text-align: center;
-}
-
-.month-tag {
-  margin-left: 8px;
-  padding: 1px 6px;
-  background: var(--surface-panel);
-  color: var(--text-muted);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.budget-table {
-  background: var(--surface-raised);
-  table-layout: fixed;
-}
-
-.budget-table thead {
-  background: var(--surface-sunken);
-}
-
-.budget-table th {
-  padding: 12px;
-  color: var(--text-bright);
-}
-
-.budget-table th.sortable {
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.budget-table th.sortable:hover {
-  background: var(--surface-raised);
-}
-
-.budget-table th:first-child {
-  width: 40px;
-}
-
-.budget-table th:nth-child(2) {
-  width: 30%;
-}
-
-.budget-table th:nth-child(3),
-.budget-table th:nth-child(4),
-.budget-table th:nth-child(5) {
-  width: calc((100% - 40px - 30%) / 3);
-}
-
-/* --bg-* come from the .color-<hue> utility on the row; gray is the fallback */
-.category-row {
-  cursor: pointer;
-  border-bottom: 1px solid var(--divider);
-  border-left: 3px solid var(--bg-primary, var(--color-gray-primary));
-  transition: background 0.2s;
-}
-
-.category-row:hover {
-  background: linear-gradient(90deg, var(--bg-transparent-hover, var(--color-gray-transparent-hover)) 0%, rgba(255, 255, 255, 0.01) 100%);
-}
-
-.category-row td {
-  padding: 12px;
-  color: var(--text-bright);
-}
-
-.expand-icon {
-  text-align: center;
-  color: var(--text-subtle);
-  font-size: 16px;
-}
-
-.category-color {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  margin-right: 8px;
-}
-
-.detail-row {
-  background: var(--surface-raised);
-  border-bottom: 1px solid var(--surface-panel);
-}
-
-.detail-row td {
-  color: var(--text-muted);
-}
-
-.budget-table td:nth-child(3),
-.budget-table td:nth-child(4),
-.budget-table td:nth-child(5),
-.budget-table th:nth-child(3),
-.budget-table th:nth-child(4),
-.budget-table th:nth-child(5) {
-  text-align: right;
-}
-
-.projected-expense-row {
-  background: var(--surface-raised);
-  font-weight: 500;
-}
-
-.transaction-nested td {
-  background: var(--surface-raised);
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.nested-indent {
-  padding-left: 32px !important;
-}
-
-/* Repeat charges collapse into one row per title; this one opens the dated breakdown */
-.transaction-group-row {
-  cursor: pointer;
-}
-
-.transaction-group-row:hover td {
-  background: var(--surface-hover);
-}
-
-/* Reserved even when the group cannot expand, so every title lines up */
-.group-caret {
-  display: inline-block;
-  width: 14px;
-  color: var(--text-subtle);
-  font-size: 10px;
-}
-
-.group-count {
-  margin-left: 8px;
-  padding: 1px 6px;
-  background: var(--surface-panel);
-  color: var(--text-subtle);
-  font-size: 11px;
-}
-
-.nested-indent-deep {
-  padding-left: 64px !important;
 }
 
 @media (max-width: 768px) {
@@ -265,29 +124,5 @@
 
   .summary-item span:last-child {
     font-size: 20px;
-  }
-
-  .budget-table {
-    font-size: 13px;
-  }
-
-  .budget-table th,
-  .budget-table td {
-    padding: 8px;
-  }
-
-  .nested-indent {
-    padding-left: 20px !important;
-  }
-
-  .nested-indent-deep {
-    padding-left: 40px !important;
-  }
-
-  .month-tag {
-    display: block;
-    margin-left: 0;
-    margin-top: 4px;
-    width: fit-content;
   }
 }
