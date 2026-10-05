@@ -52,3 +52,10 @@ test('initializes from URL query param', () => {
   render(<Tabs tabs={tabs} />)
   expect(screen.getByText('Second Tab Content')).toBeInTheDocument()
 })
+
+test('falls back to first tab when URL param matches no tab', () => {
+  window.location.search = '?activeTab=not-a-tab'
+  render(<Tabs tabs={tabs} />)
+  expect(screen.getByText('First Tab Content')).toBeInTheDocument()
+  expect(screen.queryByText('Second Tab Content')).not.toBeInTheDocument()
+})

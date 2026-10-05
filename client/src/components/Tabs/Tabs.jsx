@@ -11,10 +11,13 @@ function BodyContent({ tabs, activeTab }) {
 }
 
 export default function Tabs({ tabs = [] }) {
-  const [activeTab, setActiveTab] = useState(() => getActiveTabFromQuery() || tabs[0]?.key || '')
+  const [selectedTab, setSelectedTab] = useState(() => getActiveTabFromQuery())
+  // Falls back to the first tab when nothing is selected or the selection matches no tab
+  // (e.g. an activeTab param left over from another page)
+  const activeTab = tabs.some((t) => t.key === selectedTab) ? selectedTab : tabs[0]?.key || ''
 
   const updateOpenTab = useCallback((tabKey) => {
-    setActiveTab(tabKey)
+    setSelectedTab(tabKey)
     const url = new URL(window.location.href)
     url.searchParams.set('activeTab', tabKey)
     window.history.replaceState({}, '', url)

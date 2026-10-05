@@ -4,11 +4,12 @@ import EditableField from '../../shared/EditableField/EditableField'
 import WaterfallSelector from '../../shared/WaterfallSelector/WaterfallSelector'
 import MatchableText from '../../shared/MatchableText/MatchableText'
 import useAppData from '../../../DataContext/useAppData'
-import { formatBudgetMonth, formatTransactionDate } from '../../../utilities/dateFormatting'
+import { formatTransactionDate } from '../../../utilities/dateFormatting'
 import buildProjectedExpenseOptions from '../../../utilities/buildProjectedExpenseOptions'
+import NewProjectedExpenseDialog from './NewProjectedExpenseDialog'
 import './transactionTable.css'
 
-function TransactionRow({ transaction, isSelected, onToggleSelected, searchText }) {
+function TransactionRow({ transaction, isSelected, onToggleSelected, searchText, selectedBudgetId }) {
   const {
     categories: { categories },
     accounts: { accounts },
@@ -22,6 +23,7 @@ function TransactionRow({ transaction, isSelected, onToggleSelected, searchText 
   const budget = monthlyBudgets.find((item) => item.id === transaction.monthlyBudgetId)
   const expense = projectedExpenses.find((item) => item.id === transaction.projectedExpenseId)
   const category = categories.find((item) => item.id === expense?.categoryId)
+  const editedExpense = projectedExpenses.find((item) => item.id === edited.projectedExpenseId)
   const account = accounts.find((item) => item.id === transaction.accountId)
   // Only the expenses planned for this transaction's month can be matched to it.
   const budgetExpenses = projectedExpenses.filter((item) => item.monthlyBudgetId === transaction.monthlyBudgetId)
@@ -29,6 +31,12 @@ function TransactionRow({ transaction, isSelected, onToggleSelected, searchText 
     () => buildProjectedExpenseOptions(categories, budgetExpenses),
     [categories, budgetExpenses]
   )
+
+  // Start from the latest saved row; a bulk assign may have changed it since the last edit
+  const startEditing = () => {
+    setEdited(transaction)
+    setIsEditing(true)
+  }
 
   const save = async () => {
     await updateTransaction({ ...edited, amount: Math.abs(edited.amount) })
@@ -48,6 +56,7 @@ function TransactionRow({ transaction, isSelected, onToggleSelected, searchText 
           checked={isSelected}
           onChange={() => onToggleSelected(transaction.id)}
           aria-label={`Select ${transaction.title}`}
+          disabled={selectedBudgetId != null && selectedBudgetId !== transaction.monthlyBudgetId}
         />
       </td>
       <td>
@@ -84,7 +93,7 @@ function TransactionRow({ transaction, isSelected, onToggleSelected, searchText 
       <td>
         {isEditing ? (
           <WaterfallSelector
-            value={expense?.name || 'Unassigned'}
+            value={editedExpense?.name || 'Unassigned'}
             onChange={(option) => setEdited({ ...edited, projectedExpenseId: option.value })}
             menuOptions={expenseOptions}
           />
@@ -108,7 +117,7 @@ function TransactionRow({ transaction, isSelected, onToggleSelected, searchText 
           </>
         ) : (
           <>
-            <button className='row-action-button edit-button' onClick={() => setIsEditing(true)}><MdEdit /></button>
+            <button className='row-action-button edit-button' onClick={startEditing}><MdEdit /></button>
             <button
               className='row-action-button delete-button'
               onClick={() => deleteTransaction(transaction.id)}
@@ -131,6 +140,7 @@ export default function TransactionTable({ transactions, searchText }) {
   } = useAppData()
   const [selectedIds, setSelectedIds] = useState([])
   const [bulkExpenseId, setBulkExpenseId] = useState(null)
+  const [showNewExpense, setShowNewExpense] = useState(false)
 
   const toggleSelected = useCallback((id) => {
     setSelectedIds((selected) => selected.includes(id)
@@ -143,20 +153,23 @@ export default function TransactionTable({ transactions, searchText }) {
     [selectedIds, transactions])
 
   // A transaction's date is a day inside its own month, so a plan from another month would
-  // file it under the wrong one. One shared month is what makes a bulk assignment valid.
-  const sharedBudgetId = useMemo(() => {
-    if (selected.length === 0) return null
-    const [first] = selected
-    return selected.every((transaction) => transaction.monthlyBudgetId === first.monthlyBudgetId)
-      ? first.monthlyBudgetId
-      : null
-  }, [selected])
+  // file it under the wrong one. The first pick locks the selection to its month.
+  const selectedBudgetId = useMemo(() => {
+    if (selectedIds.length === 0) return null
+    return transactions.find((transaction) => transaction.id === selectedIds[0])?.monthlyBudgetId ?? null
+  }, [selectedIds, transactions])
 
-  const sharedBudget = monthlyBudgets.find((budget) => budget.id === sharedBudgetId)
+  const selectedBudget = monthlyBudgets.find((budget) => budget.id === selectedBudgetId)
+
+  // Select all only reaches the locked month, or the first row's month when nothing is picked yet
+  const selectableTransactions = useMemo(() => {
+    const budgetId = selectedBudgetId ?? transactions[0]?.monthlyBudgetId
+    return transactions.filter((transaction) => transaction.monthlyBudgetId === budgetId)
+  }, [selectedBudgetId, transactions])
 
   const budgetExpenses = useMemo(
-    () => projectedExpenses.filter((expense) => expense.monthlyBudgetId === sharedBudgetId),
-    [projectedExpenses, sharedBudgetId])
+    () => projectedExpenses.filter((expense) => expense.monthlyBudgetId === selectedBudgetId),
+    [projectedExpenses, selectedBudgetId])
 
   const bulkExpenseOptions = useMemo(
     () => buildProjectedExpenseOptions(categories, budgetExpenses),
@@ -173,9 +186,23 @@ export default function TransactionTable({ transactions, searchText }) {
     setBulkExpenseId(null)
   }
 
+  const allSelected = selectableTransactions.length > 0
+    && selectableTransactions.every((transaction) => selectedIds.includes(transaction.id))
+
   const toggleSelectAll = () => {
-    if (selectedIds.length === transactions.length) return clearSelection()
-    setSelectedIds(transactions.map((transaction) => transaction.id))
+    if (allSelected) return clearSelection()
+    // Keep the click order so the first pick still decides the month
+    const additions = selectableTransactions
+      .map((transaction) => transaction.id)
+      .filter((id) => !selectedIds.includes(id))
+    setSelectedIds([...selectedIds, ...additions])
+  }
+
+  const closeNewExpense = () => setShowNewExpense(false)
+
+  const newExpenseSaved = () => {
+    setShowNewExpense(false)
+    clearSelection()
   }
 
   const assignSelected = async () => {
@@ -209,28 +236,26 @@ export default function TransactionTable({ transactions, searchText }) {
     <>
       {selectedIds.length > 0 && (
         <div className='bulk-assign-bar'>
-          <span className='bulk-assign-count'>{selectedIds.length} selected</span>
-          {sharedBudgetId === null ? (
-            <span className='bulk-assign-warning'>
-              Selection spans several months — a projected expense belongs to one month, so pick
-              transactions from a single month to assign them together.
-            </span>
-          ) : (
-            <>
-              <WaterfallSelector
-                label="Projected Expense"
-                value={bulkExpenseName}
-                onChange={(option) => setBulkExpenseId(option.value)}
-                menuOptions={bulkExpenseOptions}
-              />
-              <button className='btn-green' onClick={assignSelected}>
-                Assign {selectedIds.length} to{' '}
-                {sharedBudget ? formatBudgetMonth(sharedBudget) : 'this month'}
-              </button>
-            </>
-          )}
-          <button className='btn-gray' onClick={clearSelection}>Clear</button>
+          <WaterfallSelector
+            label="Projected Expense"
+            value={bulkExpenseName}
+            onChange={(option) => setBulkExpenseId(option.value)}
+            menuOptions={bulkExpenseOptions}
+          />
+          <button onClick={() => setShowNewExpense(true)}>New Projected Expense</button>
+          <button className='btn-green assign-button' onClick={assignSelected}>
+            Assign {selectedIds.length}
+          </button>
+          <button className='btn-gray cancel-button' onClick={clearSelection}>Clear</button>
         </div>
+      )}
+      {showNewExpense && (
+        <NewProjectedExpenseDialog
+          transactions={selected}
+          budget={selectedBudget}
+          onSaved={newExpenseSaved}
+          onClose={closeNewExpense}
+        />
       )}
       <div className='transactions-table-wrapper'>
         <table className='transactions-table'>
@@ -239,7 +264,7 @@ export default function TransactionTable({ transactions, searchText }) {
               <th className='select-cell'>
                 <input
                   type='checkbox'
-                  checked={transactions.length > 0 && selectedIds.length === transactions.length}
+                  checked={allSelected}
                   onChange={toggleSelectAll}
                   aria-label='Select every transaction shown'
                 />
@@ -260,6 +285,7 @@ export default function TransactionTable({ transactions, searchText }) {
                 isSelected={selectedIds.includes(transaction.id)}
                 onToggleSelected={toggleSelected}
                 searchText={searchText}
+                selectedBudgetId={selectedBudgetId}
               />
             ))}
             <tr className='total-row'>

@@ -97,3 +97,8 @@
 .csv-mapping-buttons button:not(:first-child) {
   background-color: var(--color-gray-transparent-hover);
 }
+
+.mapping-row .mapping-detail {
+  color: var(--text-muted);
+  font-size: 12px;
+}

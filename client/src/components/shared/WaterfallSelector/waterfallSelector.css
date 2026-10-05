@@ -51,10 +51,9 @@
 
 /* Menu container */
 .waterfall-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  z-index: 1001;
+  /* Portaled to body; top/left are set from the trigger's position in placeMenu */
+  position: fixed;
+  z-index: 1101;
   display: flex;
 }
 
@@ -117,7 +116,8 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 1000;
+  /* Above dialog overlays (z-index 1000) */
+  z-index: 1100;
   background-color: transparent;
 }
 

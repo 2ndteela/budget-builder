@@ -40,21 +40,20 @@ const parseCsvLine = (line) => {
   return values
 }
 
-const parseOfx = (text) => {
-  const parser = new DOMParser()
-  const xmlDoc = parser.parseFromString(text, 'text/xml')
+// OFX 1.x is SGML, not XML: leaf tags like <TRNAMT>-99.42 are never closed, so DOMParser
+// rejects it. Read each tag's value up to the next tag or line break, which also covers OFX 2.x XML.
+const getOfxTag = (block, tagName) =>
+  block.match(new RegExp(`<${tagName}>([^<\\r\\n]*)`, 'i'))?.[1].trim() || ''
 
+const parseOfxTransactions = (statement) => {
   const transactions = []
-  const stmtTrnElements = xmlDoc.getElementsByTagName('STMTTRN')
+  const stmtTrnBlocks = statement.match(/<STMTTRN>[\s\S]*?<\/STMTTRN>/gi) || []
 
-  for (let i = 0; i < stmtTrnElements.length; i++) {
-    const trn = stmtTrnElements[i]
-    const getTag = (tagName) => trn.getElementsByTagName(tagName)[0]?.textContent || ''
-
-    const dateStr = getTag('DTPOSTED')
-    const amount = parseFloat(getTag('TRNAMT')) || 0
-    const name = getTag('NAME') || getTag('MEMO') || ''
-    const fitid = getTag('FITID')
+  for (const trn of stmtTrnBlocks) {
+    const dateStr = getOfxTag(trn, 'DTPOSTED')
+    const amount = parseFloat(getOfxTag(trn, 'TRNAMT')) || 0
+    const name = getOfxTag(trn, 'NAME') || getOfxTag(trn, 'MEMO')
+    const fitid = getOfxTag(trn, 'FITID')
 
     // OFX date format: YYYYMMDD or YYYYMMDDHHMMSS
     const year = parseInt(dateStr.substring(0, 4))
@@ -74,18 +73,36 @@ const parseOfx = (text) => {
   return transactions
 }
 
+// One export can hold several accounts, each in its own bank (STMTRS) or credit card (CCSTMTRS) statement
+const parseOfx = (text) => {
+  const statementBlocks = text.match(/<(CC)?STMTRS>[\s\S]*?<\/(CC)?STMTRS>/gi) || []
+
+  return statementBlocks
+    .map((statement) => ({
+      bankAccountNumber: getOfxTag(statement, 'ACCTID'),
+      accountType: getOfxTag(statement, 'ACCTTYPE') || 'CREDIT CARD',
+      transactions: parseOfxTransactions(statement)
+    }))
+    .filter((statement) => statement.transactions.length > 0)
+}
+
+const findBudget = (monthlyBudgets, date) => monthlyBudgets.find((item) =>
+  item.month === date.getMonth() + 1 && item.year === date.getFullYear())
+
 const columnLabel = (field) => field.charAt(0).toUpperCase() + field.slice(1)
 
 export default function FileUpload({ onImport }) {
   const {
-    accounts: { accounts },
+    accounts: { accounts, updateAccount },
     monthlyBudgets: { monthlyBudgets }
   } = useAppData()
   const [showCsvMappingDialog, setShowCsvMappingDialog] = useState(false)
   const [csvData, setCsvData] = useState(emptyCsvData)
   const [columnMapping, setColumnMapping] = useState(emptyColumnMapping)
   const [csvAccountId, setCsvAccountId] = useState(accounts[0]?.id || 1)
-  const [fileType, setFileType] = useState('')
+  const [ofxStatements, setOfxStatements] = useState([])
+  // Bank account number -> app account id, or '' to skip that statement
+  const [statementAccounts, setStatementAccounts] = useState({})
   const fileInputRef = useRef(null)
 
   // A transaction stores only the day of the month, so each row needs the monthly budget
@@ -101,8 +118,7 @@ export default function FileUpload({ onImport }) {
       const date = new Date(row[dateIndex])
       if (isNaN(date.getTime())) return null
 
-      const budget = monthlyBudgets.find((item) =>
-        item.month === date.getMonth() + 1 && item.year === date.getFullYear())
+      const budget = findBudget(monthlyBudgets, date)
       if (!budget) return null
 
       return {
@@ -123,19 +139,49 @@ export default function FileUpload({ onImport }) {
     }
   }, [csvAccountId, columnMapping, csvData, monthlyBudgets])
 
+  const { ofxImportable, ofxUnplaced } = useMemo(() => {
+    const rows = ofxStatements.flatMap(({ bankAccountNumber, transactions }) => {
+      const accountId = statementAccounts[bankAccountNumber]
+      if (!accountId) return []
+
+      return transactions.map((trn) => {
+        const budget = findBudget(monthlyBudgets, trn.date)
+        if (!budget) return null
+
+        return {
+          bankTransactionId: trn.bankTransactionId,
+          title: trn.title,
+          amount: trn.amount,
+          date: trn.date.getDate(),
+          monthlyBudgetId: budget.id,
+          projectedExpenseId: null,
+          accountId
+        }
+      })
+    })
+
+    return {
+      ofxImportable: rows.filter(Boolean),
+      ofxUnplaced: rows.filter((row) => !row).length
+    }
+  }, [ofxStatements, statementAccounts, monthlyBudgets])
+
   const closeDialog = () => {
     setShowCsvMappingDialog(false)
     setCsvData(emptyCsvData)
     setColumnMapping(emptyColumnMapping)
     setCsvAccountId(accounts[0]?.id || 1)
-    setFileType('')
+  }
+
+  const closeOfxDialog = () => {
+    setOfxStatements([])
+    setStatementAccounts({})
   }
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0]
     if (file) {
       const extension = file.name.split('.').pop().toLowerCase()
-      setFileType(extension)
 
       const reader = new FileReader()
       reader.onload = ({ target }) => {
@@ -148,37 +194,37 @@ export default function FileUpload({ onImport }) {
           setColumnMapping(emptyColumnMapping)
           setShowCsvMappingDialog(true)
         } else if (['ofx', 'qfx', 'qbo'].includes(extension)) {
-          // OFX/QFX/QBO can be parsed directly
-          const ofxTransactions = parseOfx(target.result)
-
-          // Convert to importable format with budget assignment
-          const importable = ofxTransactions.map(trn => {
-            const budget = monthlyBudgets.find((item) =>
-              item.month === trn.date.getMonth() + 1 && item.year === trn.date.getFullYear())
-
-            if (!budget) return null
-
-            return {
-              bankTransactionId: trn.bankTransactionId,
-              title: trn.title,
-              amount: trn.amount,
-              date: trn.date.getDate(),
-              monthlyBudgetId: budget.id,
-              projectedExpenseId: null,
-              accountId: accounts[0]?.id || 1
-            }
-          }).filter(Boolean)
-
-          if (importable.length > 0) {
-            onImport(importable)
-          } else {
-            alert('No valid transactions found in file or all transactions fall outside existing budgets.')
+          const statements = parseOfx(target.result)
+          if (statements.length === 0) {
+            alert('No transactions found in file.')
+            return
           }
+
+          // Statements whose bank account number is already linked to an account come pre-selected
+          setStatementAccounts(Object.fromEntries(statements.map(({ bankAccountNumber }) => [
+            bankAccountNumber,
+            accounts.find((account) => account.bankAccountNumber === bankAccountNumber)?.id || ''
+          ])))
+          setOfxStatements(statements)
         }
       }
       reader.readAsText(file)
     }
     event.target.value = ''
+  }
+
+  const handleImportOfx = async () => {
+    // Remember each pick so the next export from the same bank account maps itself
+    const links = Object.entries(statementAccounts).filter(([, accountId]) => accountId)
+    for (const [bankAccountNumber, accountId] of links) {
+      const account = accounts.find(({ id }) => id === accountId)
+      if (account && account.bankAccountNumber !== bankAccountNumber) {
+        await updateAccount({ ...account, bankAccountNumber })
+      }
+    }
+
+    onImport(ofxImportable)
+    closeOfxDialog()
   }
 
   const handleImportCsv = () => {
@@ -250,6 +296,57 @@ export default function FileUpload({ onImport }) {
                 Import {importable.length > 0 ? `${importable.length} ` : ''}Transactions
               </button>
               <button onClick={closeDialog}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {ofxStatements.length > 0 && (
+        <div className='csv-mapping-overlay'>
+          <div className='csv-mapping-dialog'>
+            <h2>Assign Bank Accounts</h2>
+
+            <div className='mapping-section'>
+              <h3>Statements in File</h3>
+              <div className='mapping-grid'>
+                {ofxStatements.map(({ bankAccountNumber, accountType, transactions }) => (
+                  <div key={bankAccountNumber} className='mapping-row'>
+                    <label>
+                      {accountType} ••{bankAccountNumber.slice(-4)}
+                      <br />
+                      <span className='mapping-detail'>
+                        {transactions.length} transaction{transactions.length === 1 ? '' : 's'}
+                      </span>
+                    </label>
+                    <select
+                      value={statementAccounts[bankAccountNumber]}
+                      onChange={({ target }) => setStatementAccounts({
+                        ...statementAccounts,
+                        [bankAccountNumber]: target.value ? Number(target.value) : ''
+                      })}
+                    >
+                      <option value=''>Skip</option>
+                      {accounts.map((account) => (
+                        <option key={account.id} value={account.id}>{account.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {ofxUnplaced > 0 && (
+              <p className='mapping-warning'>
+                {ofxUnplaced} transaction{ofxUnplaced === 1 ? '' : 's'} fall outside every existing monthly budget and
+                will be skipped. Create those months in Planning and Management to import them.
+              </p>
+            )}
+
+            <div className='csv-mapping-buttons'>
+              <button onClick={handleImportOfx} disabled={ofxImportable.length === 0}>
+                Import {ofxImportable.length > 0 ? `${ofxImportable.length} ` : ''}Transactions
+              </button>
+              <button onClick={closeOfxDialog}>Cancel</button>
             </div>
           </div>
         </div>

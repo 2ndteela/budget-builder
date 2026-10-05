@@ -173,6 +173,15 @@
   opacity: 0.7;
 }
 
+.assign-button {
+  width: 120px;
+  height: 52px;
+}
+
+.cancel-button {
+  height: 52px;
+}
+
 @media (max-width: 768px) {
   .transactions-table-wrapper {
     overflow-x: auto;
@@ -204,4 +213,10 @@
   .bulk-assign-warning {
     width: 100%;
   }
+}
+.new-expense-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--text-primary);
 }

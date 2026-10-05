@@ -20,7 +20,9 @@ export default function AccountsManager() {
     if (editedAccount.name?.trim() === '') return
 
     try {
+      // PUT replaces the whole row, so carry the other fields (e.g. bankAccountNumber) along
       await updateAccount({
+        ...editedAccount,
         id: accountId,
         name: editedAccount.name
       })
